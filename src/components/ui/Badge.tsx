@@ -54,3 +54,4 @@ export const Badge: React.FC<BadgeProps> = ({ status, variant, children, classNa
     </span>
   );
 };
+

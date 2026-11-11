@@ -312,3 +312,4 @@ export const StaffCheckInPage: React.FC = () => {
     </div>
   );
 };
+

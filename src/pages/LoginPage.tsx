@@ -132,3 +132,4 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBack }) 
     </div>
   );
 };
+

@@ -357,3 +357,4 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
     </div>
   );
 };
+

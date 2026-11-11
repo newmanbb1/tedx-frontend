@@ -150,3 +150,4 @@ export const TicketViewPage: React.FC<TicketViewPageProps> = ({ ticketCode, onBa
     </div>
   );
 };
+

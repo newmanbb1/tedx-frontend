@@ -34,3 +34,4 @@ La aplicación estará disponible en `http://localhost:5173`.
 - **Credencial Digital**: Vista individual y versión imprimible para asistentes.
 - **Panel Administrativo (`/admin`)**: Métricas de ventas, visualización y aprobación/rechazo de pagos por transferencia.
 - **Escáner Staff (`/checkin`)**: Lector de códigos QR con la cámara web, feedback sonoro/visual y prevención de reingresos duplicados.
+
