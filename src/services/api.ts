@@ -7,6 +7,15 @@ import {
   DashboardStats,
   CheckInResult,
   TicketData,
+  ValidatorStats,
+  WhatsAppDispatchResult,
+  VolunteerCashSummary,
+  SpeakerData,
+  CertificateTemplateData,
+  CertificateData,
+  CertificateLookupResult,
+  CertificateVerifyResult,
+  TicketTypeData,
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -19,7 +28,25 @@ function getAuthHeader(): Record<string, string> {
 async function handleResponse<T>(res: Response): Promise<T> {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || 'Ocurrió un error inesperado');
+    if (res.status === 401 && !res.url.includes('/auth/login')) {
+      // Si un token guardado expiró o es inválido en una llamada protegida,
+      // limpiamos el almacenamiento local y emitimos un evento para cerrar la sesión de forma limpia.
+      localStorage.removeItem('tedx_auth_token');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('tedx_auth_expired', {
+            detail: {
+              code: data.code || 'TOKEN_EXPIRED',
+              error: data.error || 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.',
+            },
+          })
+        );
+      }
+    }
+    const err: any = new Error(data.error || 'Ocurrió un error inesperado');
+    err.code = data.code;
+    err.status = res.status;
+    throw err;
   }
   return data as T;
 }
@@ -147,6 +174,21 @@ export const api = {
     return handleResponse(res);
   },
 
+  async updateTicketType(
+    id: string,
+    data: Partial<TicketTypeData>
+  ): Promise<{ message: string; ticketType: TicketTypeData }> {
+    const res = await fetch(`${API_BASE}/admin/ticket-types/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
   async validateTicket(codeOrPayload: string): Promise<CheckInResult> {
     const res = await fetch(`${API_BASE}/checkin/validate`, {
       method: 'POST',
@@ -173,5 +215,208 @@ export const api = {
     });
     return handleResponse(res);
   },
-};
 
+  // ==========================================
+  // Módulo de Validadores (Cola de 5 personas)
+  // ==========================================
+
+  async getValidatorQueue(): Promise<{ orders: OrderData[] }> {
+    const res = await fetch(`${API_BASE}/validator/queue`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async claimValidatorOrder(id: string): Promise<{ message: string; order: OrderData }> {
+    const res = await fetch(`${API_BASE}/validator/orders/${id}/claim`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+    });
+    return handleResponse(res);
+  },
+
+  async releaseValidatorOrder(id: string): Promise<{ message: string; order: OrderData }> {
+    const res = await fetch(`${API_BASE}/validator/orders/${id}/release`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+    });
+    return handleResponse(res);
+  },
+
+  async approveValidatorOrder(id: string, adminNotes?: string): Promise<{ message: string; order: OrderData }> {
+    const res = await fetch(`${API_BASE}/validator/orders/${id}/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify({ adminNotes }),
+    });
+    return handleResponse(res);
+  },
+
+  async rejectValidatorOrder(id: string, reason: string): Promise<{ message: string; order: OrderData }> {
+    const res = await fetch(`${API_BASE}/validator/orders/${id}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify({ reason }),
+    });
+    return handleResponse(res);
+  },
+
+  async getValidatorStats(): Promise<ValidatorStats> {
+    const res = await fetch(`${API_BASE}/validator/stats`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // Módulo de Voluntarios (Inscripción & WhatsApp)
+  // ==========================================
+
+  async volunteerRegister(formData: FormData): Promise<{ message: string; order: OrderData }> {
+    const res = await fetch(`${API_BASE}/volunteer/register`, {
+      method: 'POST',
+      headers: getAuthHeader(),
+      body: formData,
+    });
+    return handleResponse(res);
+  },
+
+  async lookupCarnet(carnet: string): Promise<{ query: string; totalFound: number; orders: OrderData[] }> {
+    const res = await fetch(`${API_BASE}/volunteer/lookup-carnet?carnet=${encodeURIComponent(carnet)}`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async dispatchWhatsApp(payload: {
+    ticketId?: string;
+    orderId?: string;
+    targetPhone?: string;
+  }): Promise<WhatsAppDispatchResult> {
+    const res = await fetch(`${API_BASE}/volunteer/dispatch-whatsapp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res);
+  },
+
+  async getVolunteerCashSummary(): Promise<VolunteerCashSummary> {
+    const res = await fetch(`${API_BASE}/volunteer/cash-summary`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // Módulo de Speakers (Oradores)
+  // ==========================================
+
+  async getPublicSpeakers(): Promise<{ speakers: SpeakerData[] }> {
+    const res = await fetch(`${API_BASE}/speakers/public`);
+    return handleResponse(res);
+  },
+
+  async getAllSpeakers(): Promise<{ speakers: SpeakerData[] }> {
+    const res = await fetch(`${API_BASE}/speakers`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async createSpeaker(formData: FormData): Promise<{ message: string; speaker: SpeakerData }> {
+    const res = await fetch(`${API_BASE}/speakers`, {
+      method: 'POST',
+      headers: getAuthHeader(),
+      body: formData,
+    });
+    return handleResponse(res);
+  },
+
+  async updateSpeaker(id: string, formData: FormData): Promise<{ message: string; speaker: SpeakerData }> {
+    const res = await fetch(`${API_BASE}/speakers/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeader(),
+      body: formData,
+    });
+    return handleResponse(res);
+  },
+
+  async deleteSpeaker(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/speakers/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // Módulo de Certificados Digitales (4 Modelos)
+  // ==========================================
+
+  async getCertificateTemplates(): Promise<{ templates: CertificateTemplateData[] }> {
+    const res = await fetch(`${API_BASE}/certificates/templates`);
+    return handleResponse(res);
+  },
+
+  async updateCertificateTemplate(
+    category: string,
+    formData: FormData
+  ): Promise<{ message: string; template: CertificateTemplateData }> {
+    const res = await fetch(`${API_BASE}/certificates/templates/${category}`, {
+      method: 'POST',
+      headers: getAuthHeader(),
+      body: formData,
+    });
+    return handleResponse(res);
+  },
+
+  async lookupCertificate(query: string): Promise<CertificateLookupResult> {
+    const res = await fetch(`${API_BASE}/certificates/lookup?query=${encodeURIComponent(query)}`);
+    return handleResponse(res);
+  },
+
+  async verifyCertificate(code: string): Promise<CertificateVerifyResult> {
+    const res = await fetch(`${API_BASE}/certificates/verify/${encodeURIComponent(code)}`);
+    return handleResponse(res);
+  },
+
+  async issueManualCertificate(data: {
+    recipientName: string;
+    recipientDocumentId: string;
+    category: string;
+    eventId?: string;
+  }): Promise<{ message: string; certificate: CertificateData }> {
+    const res = await fetch(`${API_BASE}/certificates/manual-issue`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async getAllCertificates(): Promise<{ certificates: CertificateData[] }> {
+    const res = await fetch(`${API_BASE}/certificates`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+};

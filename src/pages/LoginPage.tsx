@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Shield, AlertCircle, ArrowLeft } from 'lucide-react';
-import { api } from '../services/api.js';
+import { Lock, Mail, Shield, AlertCircle, ArrowLeft, Info } from 'lucide-react';
 import { Button } from '../components/ui/Button.js';
-import { UserData } from '../types/index.js';
+import { UserData, UserRole } from '../types/index.js';
+import { useAuth } from '../context/AuthContext.js';
 
 interface LoginPageProps {
-  onLoginSuccess: (user: UserData) => void;
+  onLoginSuccess: (user: UserData, intendedView?: string) => void;
   onBack: () => void;
+  intendedView?: string;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBack }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({
+  onLoginSuccess,
+  onBack,
+  intendedView,
+}) => {
+  const { login, sessionNotice, clearNotice } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,10 +24,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBack }) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    clearNotice();
     setLoading(true);
     try {
-      const data = await api.login(email, password);
-      onLoginSuccess(data.user);
+      const user = await login(email, password);
+      onLoginSuccess(user, intendedView);
     } catch (err: any) {
       setErrorMsg(err.message || 'Error al iniciar sesión');
     } finally {
@@ -29,13 +36,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBack }) 
     }
   };
 
-  const setCredentials = (role: 'admin' | 'staff') => {
-    if (role === 'admin') {
+  const setCredentials = (role: UserRole | 'VALIDATOR' | 'VOLUNTEER' | 'ADMIN' | 'STAFF') => {
+    if (role === 'ADMIN') {
       setEmail('admin@tedx.local');
       setPassword('AdminTedx2026!');
+    } else if (role === 'VALIDATOR') {
+      setEmail('validador1@tedx.local');
+      setPassword('ValidatorTedx2026!');
+    } else if (role === 'VOLUNTEER') {
+      setEmail('voluntario1@tedx.local');
+      setPassword('VoluntarioTedx2026!');
     } else {
-      setEmail('staff@tedx.local');
-      setPassword('StaffTedx2026!');
+      setEmail('checkin@tedx.local');
+      setPassword('CheckinTedx2026!');
     }
   };
 
@@ -54,11 +67,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBack }) 
           <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center mx-auto text-ted-red border border-zinc-700">
             <Shield className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Acceso al Panel</h1>
+          <h1 className="text-2xl font-bold text-white">Acceso al Sistema</h1>
           <p className="text-xs text-zinc-400">
-            Exclusivo para administradores del evento y staff de acreditación
+            Portal oficial de autenticación para Staff, Validadores, Voluntarios y Administradores
           </p>
         </div>
+
+        {sessionNotice && (
+          <div className="p-3.5 rounded-xl bg-amber-950/60 border border-amber-800 text-amber-200 text-xs flex items-center gap-2">
+            <Info className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>{sessionNotice}</span>
+          </div>
+        )}
 
         {errorMsg && (
           <div className="p-3.5 rounded-xl bg-red-950/60 border border-red-800 text-red-200 text-xs flex items-center gap-2">
@@ -109,22 +129,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBack }) 
 
         <div className="pt-4 border-t border-zinc-800 space-y-2">
           <p className="text-[11px] text-zinc-400 text-center uppercase tracking-wider">
-            Credenciales de Prueba para Desarrollo:
+            Credenciales de Prueba (Desarrollo):
           </p>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => setCredentials('admin')}
+              onClick={() => setCredentials('ADMIN')}
               className="py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 font-medium border border-zinc-700 transition-colors"
             >
-              Cargar Admin
+              Admin
             </button>
             <button
               type="button"
-              onClick={() => setCredentials('staff')}
-              className="py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 font-medium border border-zinc-700 transition-colors"
+              onClick={() => setCredentials('VALIDATOR')}
+              className="py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-amber-300 font-medium border border-zinc-700 transition-colors"
             >
-              Cargar Staff
+              Validador 1
+            </button>
+            <button
+              type="button"
+              onClick={() => setCredentials('VOLUNTEER')}
+              className="py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-emerald-300 font-medium border border-zinc-700 transition-colors"
+            >
+              Voluntario 1
+            </button>
+            <button
+              type="button"
+              onClick={() => setCredentials('STAFF')}
+              className="py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-blue-300 font-medium border border-zinc-700 transition-colors"
+            >
+              Staff Puerta
             </button>
           </div>
         </div>
@@ -132,4 +166,3 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBack }) 
     </div>
   );
 };
-

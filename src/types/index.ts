@@ -42,6 +42,78 @@ export type OrderStatus =
   | 'REJECTED'
   | 'CANCELLED';
 
+export type PaymentMethod = 'TRANSFER' | 'CASH';
+
+export type UserRole = 'ADMIN' | 'VALIDATOR' | 'VOLUNTEER' | 'CHECKIN' | 'STAFF';
+
+export type CertificateCategory = 'ATTENDEE' | 'SPEAKER' | 'VOLUNTEER' | 'VIP';
+
+export interface SpeakerData {
+  id: string;
+  eventId: string;
+  name: string;
+  role: string;
+  topic: string;
+  bio?: string;
+  imageUrl: string;
+  order: number;
+  isActive: boolean;
+}
+
+export interface CertificateTemplateData {
+  id: string;
+  eventId: string;
+  category: CertificateCategory;
+  title: string;
+  description?: string;
+  backgroundImageUrl: string;
+  isActive: boolean;
+}
+
+export interface CertificateData {
+  id: string;
+  certificateCode: string;
+  eventId: string;
+  category: CertificateCategory;
+  recipientName: string;
+  recipientDocumentId: string;
+  ticketId?: string;
+  qrCodeData: string;
+  qrDataUrl?: string;
+  issuedAt: string;
+  template?: CertificateTemplateData;
+  event?: EventData;
+  ticket?: TicketData;
+}
+
+export interface CertificateLookupResult {
+  status: 'SUCCESS' | 'NOT_FOUND' | 'NOT_CHECKED_IN' | 'ORDER_NOT_APPROVED';
+  message?: string;
+  certificate?: CertificateData;
+  ticket?: {
+    attendeeName: string;
+    attendeeDocumentId: string;
+    ticketType: string;
+    ticketCode: string;
+  };
+}
+
+export interface CertificateVerifyResult {
+  valid: boolean;
+  error?: string;
+  certificate?: {
+    code: string;
+    recipientName: string;
+    recipientDocumentId: string;
+    category: CertificateCategory;
+    eventName: string;
+    eventDate: string;
+    issuedAt: string;
+    templateTitle?: string;
+    verifiedAt: string;
+  };
+}
+
 export interface OrderItemData {
   id: string;
   ticketTypeId: string;
@@ -65,6 +137,8 @@ export interface TicketData {
   isCheckedIn: boolean;
   checkedInAt?: string;
   checkedInBy?: { name: string };
+  whatsappSentAt?: string;
+  whatsappSentCount?: number;
 }
 
 export interface OrderData {
@@ -78,9 +152,23 @@ export interface OrderData {
   buyerDocumentId: string;
   totalAmount: number;
   status: OrderStatus;
+  paymentMethod: PaymentMethod;
   proofReceiptUrl?: string;
   proofReferenceNumber?: string;
   adminNotes?: string;
+  lockedById?: string;
+  lockedBy?: { id: string; name: string; email: string };
+  lockedAt?: string;
+  reviewedById?: string;
+  reviewedBy?: { id: string; name: string; email: string };
+  reviewedAt?: string;
+  collectedById?: string;
+  collectedBy?: { id: string; name: string; email: string };
+  whatsappSentAt?: string;
+  whatsappSentCount?: number;
+  isLocked?: boolean;
+  isLockedByMe?: boolean;
+  lockRemainingSeconds?: number;
   expiresAt: string;
   createdAt: string;
   updatedAt: string;
@@ -108,7 +196,7 @@ export interface UserData {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'STAFF';
+  role: UserRole;
 }
 
 export interface DashboardStats {
@@ -138,3 +226,34 @@ export interface CheckInResult {
   };
 }
 
+export interface ValidatorStats {
+  pendingQueueCount: number;
+  myApprovedToday: number;
+  myRejectedToday: number;
+  myTotalToday: number;
+  teamTotalApprovedToday: number;
+}
+
+export interface WhatsAppDispatchResult {
+  message: string;
+  success: boolean;
+  waMeUrl: string;
+  formattedPhone?: string;
+  ticketId?: string;
+  ticketCode?: string;
+  results?: Array<{
+    ticketCode: string;
+    attendeeName: string;
+    success: boolean;
+    message: string;
+    waMeUrl: string;
+  }>;
+}
+
+export interface VolunteerCashSummary {
+  volunteerId: string;
+  todayCashOrdersCount: number;
+  todayCashTicketsCount: number;
+  todayCashTotalAmount: number;
+  orders: OrderData[];
+}

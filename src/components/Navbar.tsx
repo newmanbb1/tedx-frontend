@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Ticket, Shield, Menu, X, QrCode } from 'lucide-react';
+import { Ticket, Shield, Menu, X, QrCode, ShieldCheck, Users, Award } from 'lucide-react';
 import { Button } from './ui/Button.js';
+import { UserRole } from '../types/index.js';
 
 interface NavbarProps {
   currentView: string;
   onNavigate: (view: string) => void;
-  user?: { name: string; role: string } | null;
+  user?: { name: string; role: UserRole } | null;
   onLogout?: () => void;
 }
 
@@ -21,6 +22,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     onNavigate(view);
     setMobileMenuOpen(false);
   };
+
+  const isAdmin = user?.role === 'ADMIN';
+  const isValidator = user?.role === 'VALIDATOR' || isAdmin;
+  const isVolunteer = user?.role === 'VOLUNTEER' || isAdmin;
+  const isCheckin = user?.role === 'CHECKIN' || user?.role === 'STAFF' || isAdmin;
 
   return (
     <nav className="sticky top-0 z-40 w-full bg-ted-black/90 backdrop-blur-md border-b border-zinc-800/80">
@@ -43,14 +49,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </div>
 
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             <button
               onClick={() => handleNav('landing')}
               className={`text-sm font-medium transition-colors ${
                 currentView === 'landing' ? 'text-ted-red' : 'text-zinc-300 hover:text-white'
               }`}
             >
-              Evento & Speakers
+              Evento
             </button>
             <button
               onClick={() => handleNav('landing-tickets')}
@@ -67,33 +73,76 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Ticket className="w-4 h-4" />
               Consultar Mi Orden
             </button>
+            <button
+              onClick={() => handleNav('certificates')}
+              className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${
+                currentView === 'certificates' ? 'text-ted-red' : 'text-zinc-300 hover:text-white'
+              }`}
+            >
+              <Award className="w-4 h-4 text-ted-red" />
+              Certificados
+            </button>
 
             {user ? (
-              <div className="flex items-center gap-4 pl-4 border-l border-zinc-800">
-                {user.role === 'ADMIN' && (
+              <div className="flex items-center gap-3 pl-4 border-l border-zinc-800">
+                {isAdmin && (
                   <Button
                     size="sm"
                     variant={currentView === 'admin' ? 'primary' : 'secondary'}
                     onClick={() => handleNav('admin')}
                     leftIcon={<Shield className="w-4 h-4" />}
                   >
-                    Panel Admin
+                    Admin
                   </Button>
                 )}
-                <Button
-                  size="sm"
-                  variant={currentView === 'checkin' ? 'primary' : 'outline'}
-                  onClick={() => handleNav('checkin')}
-                  leftIcon={<QrCode className="w-4 h-4" />}
-                >
-                  Escáner Check-In
-                </Button>
-                <button
-                  onClick={onLogout}
-                  className="text-xs text-zinc-400 hover:text-red-400 transition-colors"
-                >
-                  Salir
-                </button>
+
+                {isValidator && (
+                  <Button
+                    size="sm"
+                    variant={currentView === 'validator' ? 'primary' : 'outline'}
+                    onClick={() => handleNav('validator')}
+                    leftIcon={<ShieldCheck className="w-4 h-4 text-amber-400" />}
+                    className="border-zinc-700 text-xs"
+                  >
+                    Validaciones
+                  </Button>
+                )}
+
+                {isVolunteer && (
+                  <Button
+                    size="sm"
+                    variant={currentView === 'volunteer' ? 'primary' : 'outline'}
+                    onClick={() => handleNav('volunteer')}
+                    leftIcon={<Users className="w-4 h-4 text-emerald-400" />}
+                    className="border-zinc-700 text-xs"
+                  >
+                    Voluntarios
+                  </Button>
+                )}
+
+                {isCheckin && (
+                  <Button
+                    size="sm"
+                    variant={currentView === 'checkin' ? 'primary' : 'outline'}
+                    onClick={() => handleNav('checkin')}
+                    leftIcon={<QrCode className="w-4 h-4" />}
+                    className="border-zinc-700 text-xs"
+                  >
+                    Puerta
+                  </Button>
+                )}
+
+                <div className="flex items-center space-x-2 pl-2">
+                  <span className="text-[11px] text-zinc-400 font-mono hidden lg:inline">
+                    {user.name.split(' ')[0]} ({user.role})
+                  </span>
+                  <button
+                    onClick={onLogout}
+                    className="text-xs text-zinc-400 hover:text-red-400 transition-colors"
+                  >
+                    Salir
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex items-center pl-4 border-l border-zinc-800">
@@ -103,7 +152,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => handleNav('login')}
                   leftIcon={<Shield className="w-4 h-4" />}
                 >
-                  Staff / Admin
+                  Acceso Equipo
                 </Button>
               </div>
             )}
@@ -141,11 +190,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             Consultar Mi Orden / Subir Comprobante
           </button>
+          <button
+            onClick={() => handleNav('certificates')}
+            className="block w-full text-left py-2 text-base font-medium text-ted-red font-semibold"
+          >
+            🎓 Certificados Digitales (Asistencia)
+          </button>
 
           {user ? (
             <div className="pt-4 border-t border-zinc-800 space-y-2">
               <p className="text-xs text-zinc-400">Sesión iniciada: {user.name} ({user.role})</p>
-              {user.role === 'ADMIN' && (
+              {isAdmin && (
                 <button
                   onClick={() => handleNav('admin')}
                   className="block w-full text-left py-2 text-base font-medium text-ted-red"
@@ -153,12 +208,30 @@ export const Navbar: React.FC<NavbarProps> = ({
                   Panel Administrativo
                 </button>
               )}
-              <button
-                onClick={() => handleNav('checkin')}
-                className="block w-full text-left py-2 text-base font-medium text-blue-400"
-              >
-                Escáner Staff (Check-in)
-              </button>
+              {isValidator && (
+                <button
+                  onClick={() => handleNav('validator')}
+                  className="block w-full text-left py-2 text-base font-medium text-amber-400"
+                >
+                  Cola de Validadores (5 personas)
+                </button>
+              )}
+              {isVolunteer && (
+                <button
+                  onClick={() => handleNav('volunteer')}
+                  className="block w-full text-left py-2 text-base font-medium text-emerald-400"
+                >
+                  Mesa de Voluntarios (Carnet & WhatsApp)
+                </button>
+              )}
+              {isCheckin && (
+                <button
+                  onClick={() => handleNav('checkin')}
+                  className="block w-full text-left py-2 text-base font-medium text-blue-400"
+                >
+                  Escáner Puerta (Check-in)
+                </button>
+              )}
               <button
                 onClick={onLogout}
                 className="block w-full text-left py-2 text-sm text-zinc-400 hover:text-red-400"
@@ -174,7 +247,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="w-full"
                 onClick={() => handleNav('login')}
               >
-                Acceso Staff / Administrador
+                Acceso Equipo TEDx
               </Button>
             </div>
           )}
@@ -183,4 +256,3 @@ export const Navbar: React.FC<NavbarProps> = ({
     </nav>
   );
 };
-
