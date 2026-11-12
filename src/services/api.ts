@@ -11,11 +11,14 @@ import {
   WhatsAppDispatchResult,
   VolunteerCashSummary,
   SpeakerData,
+  SponsorData,
+  BackgroundImageData,
   CertificateTemplateData,
   CertificateData,
   CertificateLookupResult,
   CertificateVerifyResult,
   TicketTypeData,
+  UpdateAttendeeItem,
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -85,8 +88,32 @@ export const api = {
     return handleResponse(res);
   },
 
+  async reportWhatsAppReceipt(
+    orderIdOrNumber: string,
+    referenceNumber?: string
+  ): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/orders/report-whatsapp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderIdOrNumber, referenceNumber }),
+    });
+    return handleResponse(res);
+  },
+
   async getOrderStatus(idOrNumber: string): Promise<{ order: OrderData }> {
     const res = await fetch(`${API_BASE}/orders/status/${encodeURIComponent(idOrNumber)}`);
+    return handleResponse(res);
+  },
+
+  async updateOrderAttendees(
+    idOrNumber: string,
+    attendees: UpdateAttendeeItem[]
+  ): Promise<{ message: string; tickets: TicketData[] }> {
+    const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(idOrNumber)}/attendees`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attendees }),
+    });
     return handleResponse(res);
   },
 
@@ -159,6 +186,13 @@ export const api = {
     return handleResponse(res);
   },
 
+  async getAdminPaymentSettings(): Promise<{ paymentSetting: PaymentSettingData }> {
+    const res = await fetch(`${API_BASE}/admin/payment-settings`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
   async updatePaymentSettings(
     id: string,
     data: Partial<PaymentSettingData>
@@ -170,6 +204,21 @@ export const api = {
         ...getAuthHeader(),
       },
       body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async uploadPaymentQr(
+    id: string,
+    file: File
+  ): Promise<{ message: string; paymentSetting: PaymentSettingData; qrImageUrl: string }> {
+    const formData = new FormData();
+    formData.append('qrImage', file);
+
+    const res = await fetch(`${API_BASE}/admin/payment-settings/${id}/qr`, {
+      method: 'POST',
+      headers: getAuthHeader(),
+      body: formData,
     });
     return handleResponse(res);
   },
@@ -327,8 +376,42 @@ export const api = {
   // Módulo de Speakers (Oradores)
   // ==========================================
 
+  async getBackgroundImages(): Promise<{ images: BackgroundImageData[] }> {
+    const res = await fetch(`${API_BASE}/backgrounds`);
+    return handleResponse(res);
+  },
+
+  async getAdminBackgroundImages(): Promise<{ images: BackgroundImageData[] }> {
+    const res = await fetch(`${API_BASE}/backgrounds/admin`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async uploadBackgroundImage(formData: FormData): Promise<{ image: BackgroundImageData }> {
+    const res = await fetch(`${API_BASE}/backgrounds`, {
+      method: 'POST',
+      headers: getAuthHeader(),
+      body: formData,
+    });
+    return handleResponse(res);
+  },
+
+  async deleteBackgroundImage(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/backgrounds/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
   async getPublicSpeakers(): Promise<{ speakers: SpeakerData[] }> {
     const res = await fetch(`${API_BASE}/speakers/public`);
+    return handleResponse(res);
+  },
+
+  async getSponsors(): Promise<{ sponsors: SponsorData[] }> {
+    const res = await fetch(`${API_BASE}/sponsors`);
     return handleResponse(res);
   },
 

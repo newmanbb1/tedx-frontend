@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Calendar,
-  MapPin,
-  Clock,
   Sparkles,
   ArrowRight,
-  CheckCircle2,
-  Users,
   Zap,
   Award,
 } from 'lucide-react';
-import { EventData, TicketTypeData, SpeakerData } from '../types/index.js';
+import { motion, AnimatePresence } from 'framer-motion';
+import { EventData, SpeakerData, BackgroundImageData } from '../types/index.js';
 import { Button } from '../components/ui/Button.js';
 import { api } from '../services/api.js';
 
@@ -22,10 +18,11 @@ interface LandingPageProps {
 
 const DEFAULT_SPEAKERS = [
   {
-    name: 'Dra. Elena Vega',
-    role: 'Investigadora en Neurotecnología & IA',
-    topic: 'La interfaz mente-máquina: El futuro de la cognición humana',
+    name: 'ERICK MITA',
+    role: 'Vicerrector USFX & Gestor Universitario',
+    topic: 'En la universidad no solo se debe formar profesionales, sino transformar vidas y contribuir al desarrollo de la sociedad.',
     imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
+    quote: 'En la universidad no solo se debe formar profesionales, sino transformar vidas y contribuir al desarrollo de la sociedad',
   },
   {
     name: 'Carlos Mendoza',
@@ -47,18 +44,11 @@ const DEFAULT_SPEAKERS = [
   },
 ];
 
-const AGENDA = [
-  { time: '08:30 - 09:30', title: 'Registro y Acreditación QR', desc: 'Entrega de kits de bienvenida y café de apertura' },
-  { time: '09:30 - 11:30', title: 'Bloque 1: Rompiendo Paradigmas', desc: '4 charlas magistrales sobre ciencia y tecnología emergente' },
-  { time: '11:30 - 12:30', title: 'Experiencias Interactivas & Networking', desc: 'Demostraciones en vivo y contacto con sponsors' },
-  { time: '12:30 - 14:00', title: 'Almuerzo Libre & Actividades', desc: 'Zona gastronómica y dinámicas guiadas' },
-  { time: '14:00 - 16:30', title: 'Bloque 2: El Futuro en Nuestras Manos', desc: '4 conferencias sobre impacto social, arte y sostenibilidad' },
-  { time: '16:30 - 18:00', title: 'Clausura & Cóctel VIP', desc: 'Espacio exclusivo para oradores y pases VIP' },
-];
-
 export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets, onNavigate }) => {
   const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>({});
   const [speakers, setSpeakers] = useState<Array<SpeakerData | typeof DEFAULT_SPEAKERS[0]>>(DEFAULT_SPEAKERS);
+  const [bgImages, setBgImages] = useState<BackgroundImageData[]>([]);
+  const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   useEffect(() => {
     const fetchSpeakers = async () => {
@@ -71,8 +61,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
         console.warn('Usando speakers predeterminados');
       }
     };
+
+    const fetchBackgrounds = async () => {
+      try {
+        const res = await api.getBackgroundImages();
+        if (res.images && res.images.length > 0) {
+          setBgImages(res.images);
+        }
+      } catch (e) {
+        console.warn('No hay imágenes de fondo');
+      }
+    };
+
     fetchSpeakers();
+    fetchBackgrounds();
   }, []);
+
+  useEffect(() => {
+    if (bgImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentBgIndex((prev) => (prev + 1) % bgImages.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [bgImages]);
 
   const handleQtyChange = (ticketTypeId: string, delta: number, maxAvailable: number) => {
     setSelectedQuantities((prev) => {
@@ -98,52 +109,94 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
     }
   };
 
-  const eventDateFormatted = event?.date
-    ? new Date(event.date).toLocaleDateString('es-ES', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : '28 de Noviembre de 2026';
-
   return (
-    <div className="space-y-24 pb-20">
+    <div className="space-y-24 pb-20 overflow-hidden relative">
+      {/* Fondo de Carrusel Dinámico */}
+      {bgImages.length > 0 && (
+        <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentBgIndex}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 0.25, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5, ease: 'easeInOut' }}
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${bgImages[currentBgIndex].imageUrl})` }}
+            />
+          </AnimatePresence>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/60 to-[#0D0D0D]" />
+        </div>
+      )}
+
+      {/* Fondo de patrón dinámico TEDx USFX */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03] select-none flex flex-wrap gap-12 font-black text-6xl tracking-widest text-red-600 overflow-hidden -z-10 leading-none">
+        {Array.from({ length: 40 }).map((_, i) => (
+          <span key={i}>TEDxUSFX</span>
+        ))}
+      </div>
+
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-12">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(235,0,40,0.15)_0%,_transparent_70%)] pointer-events-none" />
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-ted-red/10 blur-[140px] pointer-events-none rounded-full" />
+      <section className="relative min-h-[90vh] flex items-center justify-center pt-8 sm:pt-16">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(235,0,40,0.18)_0%,_transparent_70%)] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[300px] bg-ted-red/15 blur-[120px] pointer-events-none rounded-full" />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-ted-red uppercase tracking-widest shadow-xl">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 sm:space-y-8 z-10">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-ted-red uppercase tracking-widest shadow-xl"
+          >
             <Sparkles className="w-3.5 h-3.5" />
-            Edición Oficial 2026 &bull; {event?.title || 'TEDx Innova'}
-          </div>
+            Edición Oficial 2026 &bull; {event?.title || 'TEDx USFX'}
+          </motion.div>
 
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.08]">
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-4xl sm:text-7xl font-black tracking-tight text-white leading-[1.05]"
+          >
             IDEAS QUE <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-ted-red via-red-500 to-amber-500">
               VALE LA PENA DIFUNDIR
             </span>
-          </h1>
+          </motion.h1>
 
-          <p className="max-w-2xl mx-auto text-base sm:text-xl text-zinc-300 leading-relaxed font-light">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="max-w-2xl mx-auto text-sm sm:text-xl text-zinc-300 leading-relaxed font-light"
+          >
             {event?.subtitle ||
               'Conectando mentes audaces, ciencia de frontera y las soluciones que transformarán nuestra sociedad.'}
-          </p>
+          </motion.p>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs sm:text-sm text-zinc-400">
-            <div className="flex items-center gap-2 bg-zinc-900/80 px-4 py-2 rounded-full border border-zinc-800">
-              <Calendar className="w-4 h-4 text-ted-red" />
-              <span className="capitalize">{eventDateFormatted}</span>
+          {/* Bloques de Alto Contraste Inspirados en el Póster Oficial */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+          >
+            <div className="bg-white text-black font-black px-6 py-3 rounded-none shadow-2xl flex flex-col items-center justify-center w-full sm:w-auto uppercase tracking-tighter">
+              <span className="text-sm sm:text-base">SÁBADO, 21 NOV.</span>
+              <span className="text-xl sm:text-2xl leading-none">9:30 A.M.</span>
             </div>
-            <div className="flex items-center gap-2 bg-zinc-900/80 px-4 py-2 rounded-full border border-zinc-800">
-              <MapPin className="w-4 h-4 text-ted-red" />
-              <span>{event?.venue || 'Auditorio Mayor'}, {event?.location || 'Bolivia'}</span>
+            <div className="bg-white text-black font-black px-6 py-3 rounded-none shadow-2xl flex flex-col items-center justify-center w-full sm:w-auto uppercase tracking-tighter">
+              <span className="text-xs sm:text-sm">LUGAR:</span>
+              <span className="text-base sm:text-xl leading-none">TEATRO GRAN MARISCAL.</span>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6"
+          >
             <Button
               size="lg"
               onClick={() => {
@@ -167,259 +220,157 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
                 <span>Certificados de Asistencia</span>
               </Button>
             )}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Banner de Certificados Digitales */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-zinc-900 via-zinc-900/90 to-red-950/40 border border-zinc-800 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
-          <div className="flex items-start space-x-4">
-            <div className="p-3 bg-ted-red/20 border border-ted-red/40 rounded-2xl text-ted-red shrink-0">
-              <Award className="w-8 h-8" />
+      {/* Orador Destacado: Erick Mita (Diseño Poster) */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-3xl p-6 sm:p-10 relative overflow-hidden shadow-2xl"
+        >
+          <div className="absolute top-0 right-0 p-8 text-8xl font-black text-white/5 select-none pointer-events-none">
+            SPEAKER
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="relative aspect-[4/5] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950">
+              <img
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"
+                alt="Erick Mita"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-4 left-4 bg-black/80 px-4 py-1 border border-zinc-700 text-xs font-bold text-ted-red tracking-wider">
+                SPEAKER TEDxUSFX 2026
+              </div>
             </div>
-            <div className="space-y-1">
-              <h3 className="text-xl font-bold text-white">
-                ¿Asististe o participaste en TEDx Innova?
-              </h3>
-              <p className="text-xs sm:text-sm text-zinc-400 max-w-xl">
-                Ingresa tu número de Carnet (CI) para consultar y descargar tu <strong>Certificado Digital Oficial</strong> con código QR de verificación único, disponible para Asistentes acreditados, Oradores, Voluntarios y VIPs.
+            <div className="space-y-4">
+              <h3 className="text-3xl sm:text-5xl font-black text-white tracking-tight">ERICK MITA</h3>
+              <p className="text-ted-red font-semibold text-sm uppercase">Vicerrector USFX & Gestor Universitario</p>
+              <div className="p-4 bg-zinc-950/80 border-l-4 border-ted-red rounded-r-xl">
+                <p className="italic text-zinc-300 text-sm sm:text-base font-light">
+                  "En la universidad no solo se debe formar profesionales, sino transformar vidas y contribuir al desarrollo de la sociedad"
+                </p>
+              </div>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Docente, investigador y gestor universitario, Doctor en Ciencias de la Educación. Ha desempeñado importantes cargos académicos, destacándose por su liderazgo, producción científica y compromiso con la transformación de la educación superior.
               </p>
             </div>
           </div>
-
-          {onNavigate && (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => onNavigate('certificates')}
-              className="bg-ted-red hover:bg-red-700 text-white shrink-0 px-6 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-2"
-            >
-              <span>Generar Mi Certificado</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
+        </motion.div>
       </section>
 
-      {/* Speakers Section */}
+      {/* Resto de Oradores */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-4 mb-16">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ted-red uppercase tracking-widest">
-            <Users className="w-4 h-4" />
-            Líderes de Pensamiento
-          </div>
           <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-            Conferencistas Magistrales
+            Otros Conferencistas Invitados
           </h2>
           <p className="text-zinc-400 max-w-2xl mx-auto text-sm sm:text-base">
-            Ocho oradores excepcionales compartirán sus descubrimientos, experiencias y visiones en el escenario oficial de TEDx.
+            Líderes que compartirán ideas transformadoras en el Teatro Gran Mariscal.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {speakers.map((speaker, idx) => (
-            <div
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {speakers.slice(1).map((speaker, idx) => (
+            <motion.div
               key={idx}
-              className="group bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden hover:border-ted-red/50 transition-all duration-300 hover:shadow-2xl hover:shadow-ted-red/10 flex flex-col"
+              whileHover={{ y: -8 }}
+              className="bg-zinc-900/60 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col"
             >
-              <div className="aspect-[4/5] relative overflow-hidden bg-zinc-950">
-                <img
-                  src={speaker.imageUrl}
-                  alt={speaker.name}
-                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
+              <div className="aspect-[4/5] bg-zinc-950 overflow-hidden">
+                <img src={speaker.imageUrl} alt={speaker.name} className="w-full h-full object-cover" />
               </div>
               <div className="p-5 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-ted-red transition-colors">
-                    {speaker.name}
-                  </h3>
-                  <p className="text-xs font-medium text-ted-red/90 mt-1 uppercase tracking-wider">
-                    {speaker.role}
-                  </p>
-                  <p className="text-sm text-zinc-400 mt-3 italic line-clamp-3">
-                    "{speaker.topic}"
-                  </p>
+                  <h3 className="text-lg font-bold text-white">{speaker.name}</h3>
+                  <p className="text-xs text-ted-red mt-1 uppercase font-semibold">{speaker.role}</p>
+                  <p className="text-sm text-zinc-400 mt-2 italic line-clamp-2">"{speaker.topic}"</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* Agenda Section */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center space-y-4 mb-14">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ted-red uppercase tracking-widest">
-            <Clock className="w-4 h-4" />
-            Cronograma Oficial
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-            Programa de la Jornada
-          </h2>
-          <p className="text-zinc-400 text-sm sm:text-base">
-            Una experiencia inmersiva de día completo diseñada para inspirar y conectar.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          {AGENDA.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 transition-colors gap-4"
-            >
-              <div className="flex items-center gap-4">
-                <span className="px-3 py-1.5 rounded-lg bg-zinc-800 text-ted-red font-mono text-xs font-bold tracking-tight">
-                  {item.time}
-                </span>
-                <div>
-                  <h4 className="text-base font-bold text-white">{item.title}</h4>
-                  <p className="text-xs sm:text-sm text-zinc-400">{item.desc}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Tickets Section con Precios en Bolivianos (Bs) */}
+      {/* Tickets Section */}
       <section id="tickets" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
         <div className="text-center space-y-4 mb-16">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ted-red uppercase tracking-widest">
             <Zap className="w-4 h-4" />
-            Venta Oficial en Bolivianos (Bs)
+            Acceso Oficial al Evento
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-            Selecciona tus Entradas
+          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+            Adquiere Tus Entradas
           </h2>
-          <p className="text-zinc-400 max-w-2xl mx-auto text-sm sm:text-base">
-            Pago seguro mediante transferencia bancaria o en efectivo en puntos de acreditación. Cupos limitados por aforo oficial.
+          <p className="text-zinc-400 max-w-xl mx-auto text-sm sm:text-base">
+            Selecciona la cantidad de pases que deseas y continúa para realizar tu acreditación y pago por QR.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {event?.ticketTypes.map((ticket: TicketTypeData) => {
-            const qty = selectedQuantities[ticket.id] || 0;
-            const isSoldOut = ticket.remainingQuota <= 0;
+          {event?.ticketTypes.map((tt) => {
+            const isSoldOut = tt.remainingQuota <= 0;
+            const currentQty = selectedQuantities[tt.id] || 0;
 
             return (
               <div
-                key={ticket.id}
-                className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 border ${
-                  qty > 0
-                    ? 'bg-zinc-900/90 border-ted-red shadow-2xl shadow-ted-red/10 scale-[1.02]'
-                    : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-700'
-                }`}
+                key={tt.id}
+                className="bg-zinc-900/80 border border-zinc-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between"
               >
-                {isSoldOut && (
-                  <span className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700 uppercase">
-                    Agotado
-                  </span>
-                )}
-
                 <div>
-                  <h3 className="text-xl font-black text-white">{ticket.name}</h3>
-                  <div className="mt-4 flex items-baseline">
-                    <span className="text-3xl sm:text-4xl font-black text-white font-mono">
-                      Bs {ticket.price.toFixed(2)}
-                    </span>
-                    <span className="ml-2 text-xs text-zinc-400">/ entrada</span>
-                  </div>
-
-                  <p className="mt-4 text-sm text-zinc-300 leading-relaxed min-h-[48px]">
-                    {ticket.description}
-                  </p>
-
-                  <div className="mt-6 pt-6 border-t border-zinc-800/80 space-y-3 text-xs text-zinc-400">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-ted-red shrink-0" />
-                      <span>Acceso garantizado al auditorio</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-ted-red shrink-0" />
-                      <span>Credencial oficial con código QR</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-ted-red shrink-0" />
-                      <span>Certificado digital de asistencia con QR</span>
-                    </div>
+                  <h3 className="text-2xl font-black text-white">{tt.name}</h3>
+                  <p className="text-sm text-zinc-400 mt-2 min-h-[48px]">{tt.description}</p>
+                  <div className="mt-6 flex items-baseline">
+                    <span className="text-4xl font-black text-white font-mono">Bs {tt.price.toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-zinc-800/80">
-                  {isSoldOut ? (
-                    <Button disabled className="w-full" variant="secondary">
-                      Cupos Agotados
-                    </Button>
-                  ) : (
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center bg-zinc-800 rounded-xl p-1 border border-zinc-700">
-                        <button
-                          onClick={() => handleQtyChange(ticket.id, -1, ticket.remainingQuota)}
-                          disabled={qty === 0}
-                          className="w-9 h-9 flex items-center justify-center rounded-lg text-lg font-bold text-zinc-300 hover:text-white hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          -
-                        </button>
-                        <span className="w-10 text-center font-bold text-white text-base font-mono">
-                          {qty}
-                        </span>
-                        <button
-                          onClick={() => handleQtyChange(ticket.id, 1, ticket.remainingQuota)}
-                          disabled={qty >= ticket.remainingQuota || qty >= 10}
-                          className="w-9 h-9 flex items-center justify-center rounded-lg text-lg font-bold text-zinc-300 hover:text-white hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          +
-                        </button>
-                      </div>
-
-                      <Button
-                        variant={qty > 0 ? 'primary' : 'outline'}
-                        className="flex-1"
-                        onClick={() => {
-                          if (qty === 0) handleQtyChange(ticket.id, 1, ticket.remainingQuota);
-                        }}
-                      >
-                        {qty > 0 ? 'Seleccionado' : 'Añadir'}
-                      </Button>
-                    </div>
-                  )}
+                <div className="pt-8 border-t border-zinc-800 flex items-center justify-between">
+                  <div className="flex items-center space-x-3 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+                    <button
+                      onClick={() => handleQtyChange(tt.id, -1, tt.remainingQuota)}
+                      disabled={currentQty === 0 || isSoldOut}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-zinc-800 disabled:opacity-30"
+                    >
+                      -
+                    </button>
+                    <span className="w-6 text-center font-bold text-white">{currentQty}</span>
+                    <button
+                      onClick={() => handleQtyChange(tt.id, 1, tt.remainingQuota)}
+                      disabled={currentQty >= tt.remainingQuota || isSoldOut}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-zinc-800 disabled:opacity-30"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
-      </section>
 
-      {/* Floating Bottom Bar si hay tickets seleccionados */}
-      {totalSelectedTickets > 0 && (
-        <div className="fixed bottom-0 inset-x-0 z-30 p-4 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 animate-in slide-in-from-bottom duration-300 shadow-2xl">
-          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <p className="text-xs text-zinc-400">Total a Pagar (Bolivianos)</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-white font-mono">
-                  Bs {totalAmount.toFixed(2)}
-                </span>
-                <span className="text-xs text-zinc-400">
-                  ({totalSelectedTickets} {totalSelectedTickets === 1 ? 'entrada' : 'entradas'})
-                </span>
-              </div>
-            </div>
-
-            <Button
-              size="lg"
-              onClick={handleProceedToCheckout}
-              className="w-full sm:w-auto px-8 shadow-xl shadow-ted-red/20 font-bold"
-              rightIcon={<ArrowRight className="w-4 h-4" />}
+        {totalSelectedTickets > 0 && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="bg-zinc-900/95 backdrop-blur-md border border-ted-red/50 p-4 rounded-2xl shadow-2xl flex items-center justify-between"
             >
-              Continuar al Formulario y Pago
-            </Button>
+              <div>
+                <p className="text-xs text-zinc-400 font-semibold">{totalSelectedTickets} pase(s) seleccionado(s)</p>
+                <p className="text-xl font-black text-white font-mono">Total: Bs {totalAmount.toFixed(2)}</p>
+              </div>
+              <Button onClick={handleProceedToCheckout} className="bg-ted-red text-white font-bold">
+                Continuar
+              </Button>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </section>
     </div>
   );
 };

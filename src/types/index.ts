@@ -1,3 +1,23 @@
+export interface BackgroundImageData {
+  id: string;
+  eventId?: string;
+  imageUrl: string;
+  title?: string;
+  order: number;
+  isActive: boolean;
+}
+
+export interface SponsorData {
+  id: string;
+  eventId?: string;
+  name: string;
+  logoUrl: string;
+  websiteUrl?: string | null;
+  tier: string;
+  order: number;
+  isActive: boolean;
+}
+
 export interface EventData {
   id: string;
   title: string;
@@ -11,6 +31,7 @@ export interface EventData {
   isActive: boolean;
   maxCapacity: number;
   ticketTypes: TicketTypeData[];
+  sponsors?: SponsorData[];
 }
 
 export interface TicketTypeData {
@@ -26,12 +47,14 @@ export interface TicketTypeData {
 
 export interface PaymentSettingData {
   id: string;
-  bankName: string;
-  accountType: string;
-  accountNumber: string;
-  accountHolder: string;
-  holderId: string;
-  instructions?: string;
+  bankName?: string | null;
+  accountType?: string | null;
+  accountNumber?: string | null;
+  accountHolder?: string | null;
+  holderId?: string | null;
+  qrImageUrl?: string | null;
+  whatsappContactNumber?: string | null;
+  instructions?: string | null;
   isActive: boolean;
 }
 
@@ -147,7 +170,7 @@ export interface OrderData {
   eventId: string;
   event: EventData;
   buyerName: string;
-  buyerEmail: string;
+  buyerEmail?: string | null;
   buyerPhone: string;
   buyerDocumentId: string;
   totalAmount: number;
@@ -178,18 +201,27 @@ export interface OrderData {
 
 export interface AttendeeInput {
   ticketTypeId: string;
+  attendeeName?: string;
+  attendeeEmail?: string;
+  attendeeDocumentId?: string;
+}
+
+export interface UpdateAttendeeItem {
+  id?: string;
+  ticketCode?: string;
   attendeeName: string;
-  attendeeEmail: string;
   attendeeDocumentId: string;
+  attendeeEmail?: string;
 }
 
 export interface CreateOrderPayload {
   eventId: string;
   buyerName: string;
-  buyerEmail: string;
+  buyerEmail?: string;
   buyerPhone: string;
   buyerDocumentId: string;
-  attendees: AttendeeInput[];
+  items?: Array<{ ticketTypeId: string; quantity: number }>;
+  attendees?: AttendeeInput[];
 }
 
 export interface UserData {

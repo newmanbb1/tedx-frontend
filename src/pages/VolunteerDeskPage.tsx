@@ -447,7 +447,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                   <div>
                     <span className="text-zinc-500 block">Método de Pago:</span>
                     <span className="font-semibold text-zinc-300">
-                      {order.paymentMethod === 'CASH' ? '💵 Efectivo presencial' : '🏦 Transferencia bancaria'}
+                      {order.paymentMethod === 'CASH' ? 'Efectivo presencial' : 'Transferencia bancaria'}
                     </span>
                   </div>
                 </div>
@@ -457,12 +457,12 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                   <div className="mx-5 p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-2 text-xs">
                     {isSubmitted && (
                       <p className="text-amber-300">
-                        ⏳ <strong>Aviso al comprador:</strong> El comprobante de transferencia bancaria fue recibido y está en la cola de revisión de los 5 validadores. En cuanto sea aprobado en el sistema, podrás presionar el botón de envío por WhatsApp.
+                        <strong>Aviso al comprador:</strong> El comprobante de transferencia bancaria fue recibido y está en la cola de revisión de los 5 validadores. En cuanto sea aprobado en el sistema, podrás presionar el botón de envío por WhatsApp.
                       </p>
                     )}
                     {isRejected && (
                       <p className="text-rose-300">
-                        ❌ <strong>Motivo de rechazo:</strong> {order.adminNotes || 'El comprobante no pudo ser validado en la cuenta bancaria.'}
+                        <strong>Motivo de rechazo:</strong> {order.adminNotes || 'El comprobante no pudo ser validado en la cuenta bancaria.'}
                       </p>
                     )}
                   </div>
@@ -563,7 +563,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                                 href={`https://wa.me/${
                                   currentPhoneInput.length === 8 ? `591${currentPhoneInput}` : currentPhoneInput
                                 }?text=${encodeURIComponent(
-                                  `🎟️ ¡Hola ${ticket.attendeeName}! Tu entrada para ${order.event.title} está confirmada. Ver credencial y código QR: ${window.location.origin}/?ticket=${ticket.ticketCode}`
+                                  `¡Hola ${ticket.attendeeName}! Tu entrada para ${order.event.title} está confirmada. Ver credencial y código QR: ${window.location.origin}/?ticket=${ticket.ticketCode}`
                                 )}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -809,7 +809,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                 >
                   <div className="flex items-center space-x-2">
                     <Banknote className="w-5 h-5 text-emerald-400" />
-                    <span className="font-bold text-white text-sm">💵 Pago en Efectivo (En Mano)</span>
+                    <span className="font-bold text-white text-sm">Pago en Efectivo (En Mano)</span>
                   </div>
                   <p className="text-xs text-zinc-400 mt-2">
                     Cobras el dinero en el stand. La orden se <strong>aprueba de inmediato</strong> y queda registrada a tu nombre como recaudador. Los boletos quedan listos para enviar al instante.
@@ -827,7 +827,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                 >
                   <div className="flex items-center space-x-2">
                     <CreditCard className="w-5 h-5 text-amber-400" />
-                    <span className="font-bold text-white text-sm">🏦 Transferencia Bancaria</span>
+                    <span className="font-bold text-white text-sm">Transferencia Bancaria</span>
                   </div>
                   <p className="text-xs text-zinc-400 mt-2">
                     El comprador realizó una transferencia. Subes la foto del comprobante o referencia y se deriva a la cola de los <strong>5 validadores</strong>.

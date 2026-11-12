@@ -15,6 +15,9 @@ import {
   Trash2,
   Edit2,
   Save,
+  QrCode,
+  Image,
+  MessageCircle,
 } from 'lucide-react';
 import {
   DashboardStats,
@@ -23,6 +26,8 @@ import {
   CertificateTemplateData,
   CertificateCategory,
   TicketTypeData,
+  PaymentSettingData,
+  BackgroundImageData,
 } from '../types/index.js';
 import { api } from '../services/api.js';
 import { Badge } from '../components/ui/Badge.js';
@@ -30,7 +35,7 @@ import { Button } from '../components/ui/Button.js';
 import { Modal } from '../components/ui/Modal.js';
 
 export const AdminDashboardPage: React.FC = () => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'speakers' | 'certificates' | 'tickets'>('orders');
+  const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'speakers' | 'certificates' | 'tickets' | 'payment' | 'backgrounds'>('orders');
 
   // Pestaña Órdenes
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -79,6 +84,24 @@ export const AdminDashboardPage: React.FC = () => {
   const [ticketPriceInput, setTicketPriceInput] = useState<number>(0);
   const [ticketQuotaInput, setTicketQuotaInput] = useState<number>(0);
 
+  // Pestaña Configuración de Pago QR Oficial
+  const [paymentSetting, setPaymentSetting] = useState<PaymentSettingData | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [qrFile, setQrFile] = useState<File | null>(null);
+  const [qrPreview, setQrPreview] = useState<string | null>(null);
+  const [instructionsInput, setInstructionsInput] = useState('');
+  const [accountHolderInput, setAccountHolderInput] = useState('');
+  const [bankNameInput, setBankNameInput] = useState('');
+  const [whatsappContactInput, setWhatsappContactInput] = useState('');
+  const [paymentMsg, setPaymentMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Pestaña Imágenes de Fondo Dinámicas
+  const [backgroundImages, setBackgroundImages] = useState<BackgroundImageData[]>([]);
+  const [bgUploadFile, setBgUploadFile] = useState<File | null>(null);
+  const [bgTitleInput, setBgTitleInput] = useState('');
+  const [bgLoading, setBgLoading] = useState(false);
+  const [bgMsg, setBgMsg] = useState<string | null>(null);
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -122,12 +145,113 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  const loadPaymentSettings = async () => {
+    try {
+      const res = await api.getAdminPaymentSettings();
+      if (res.paymentSetting) {
+        setPaymentSetting(res.paymentSetting);
+        setInstructionsInput(res.paymentSetting.instructions || '');
+        setAccountHolderInput(res.paymentSetting.accountHolder || '');
+        setBankNameInput(res.paymentSetting.bankName || '');
+        setWhatsappContactInput(res.paymentSetting.whatsappContactNumber || '');
+      }
+    } catch (err) {
+      console.error('Error cargando configuración de pago QR:', err);
+    }
+  };
+
+  const loadBackgrounds = async () => {
+    try {
+      const res = await api.getAdminBackgroundImages();
+      setBackgroundImages(res.images || []);
+    } catch (err) {
+      console.error('Error cargando fondos:', err);
+    }
+  };
+
   useEffect(() => {
     loadData();
     loadSpeakers();
     loadTemplates();
     loadTicketTypes();
+    loadPaymentSettings();
+    loadBackgrounds();
   }, [statusFilter]);
+
+  const handleUploadBackground = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bgUploadFile) return;
+    setBgLoading(true);
+    setBgMsg(null);
+    try {
+      const formData = new FormData();
+      formData.append('image', bgUploadFile);
+      if (bgTitleInput) formData.append('title', bgTitleInput);
+      formData.append('order', String(backgroundImages.length + 1));
+      formData.append('isActive', 'true');
+
+      await api.uploadBackgroundImage(formData);
+      setBgUploadFile(null);
+      setBgTitleInput('');
+      setBgMsg('Imagen de fondo subida exitosamente');
+      loadBackgrounds();
+    } catch (err: any) {
+      setBgMsg(`Error: ${err.message || 'No se pudo subir la imagen'}`);
+    } finally {
+      setBgLoading(false);
+    }
+  };
+
+  const handleDeleteBackground = async (id: string) => {
+    if (!confirm('¿Seguro que deseas eliminar esta imagen de fondo?')) return;
+    try {
+      await api.deleteBackgroundImage(id);
+      loadBackgrounds();
+    } catch (err: any) {
+      alert('Error al eliminar imagen');
+    }
+  };
+
+  const handleQrFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setQrFile(file);
+      const reader = new FileReader();
+      reader.onload = () => setQrPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSavePaymentSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paymentSetting) return;
+    setPaymentLoading(true);
+    setPaymentMsg(null);
+    try {
+      let currentSetting = paymentSetting;
+      if (qrFile) {
+        const uploadRes = await api.uploadPaymentQr(paymentSetting.id, qrFile);
+        currentSetting = uploadRes.paymentSetting;
+        setQrFile(null);
+        setQrPreview(null);
+      }
+
+      const updateRes = await api.updatePaymentSettings(currentSetting.id, {
+        instructions: instructionsInput,
+        accountHolder: accountHolderInput,
+        bankName: bankNameInput,
+        whatsappContactNumber: whatsappContactInput,
+        isActive: true,
+      });
+
+      setPaymentSetting(updateRes.paymentSetting);
+      setPaymentMsg({ type: 'success', text: '¡Código QR de pago e instrucciones guardadas exitosamente!' });
+    } catch (err: any) {
+      setPaymentMsg({ type: 'error', text: err.message || 'Error al guardar la configuración de pago QR.' });
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,6 +276,32 @@ export const AdminDashboardPage: React.FC = () => {
       setActionLoading(false);
     }
   };
+
+  const handleApproveAndNotifyWhatsApp = async () => {
+    if (!selectedOrder) return;
+    const buyerPhone = selectedOrder.buyerPhone.replace(/\D/g, '');
+    const phone = buyerPhone.length === 8 ? `591${buyerPhone}` : buyerPhone;
+    const msg = `Hola *${selectedOrder.buyerName}*:\nTu orden *#${selectedOrder.orderNumber}* para *TEDx USFX 2026* ha sido APROBADA exitosamente.\n\nPuedes ver tus credenciales oficiales con código QR para el Teatro Gran Mariscal aquí:\n${window.location.origin}/?order=${selectedOrder.orderNumber}\n\nTe esperamos el Sábado 21 de Noviembre a las 9:30 AM.`;
+    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+
+    await handleApprove();
+    window.open(waUrl, '_blank');
+  };
+
+  const getBuyerWhatsAppLink = () => {
+    if (!selectedOrder) return '#';
+    const buyerPhone = selectedOrder.buyerPhone.replace(/\D/g, '');
+    const phone = buyerPhone.length === 8 ? `591${buyerPhone}` : buyerPhone;
+    const msg = `Hola *${selectedOrder.buyerName}*! Nos comunicamos del equipo organizador de *TEDx USFX 2026* respecto a tu orden *#${selectedOrder.orderNumber}*...`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+  };
+
+  const quickRejectPills = [
+    'Comprobante no visible o ilegible',
+    'Monto transferido incompleto',
+    'Referencia ya utilizada',
+    'Cuenta errónea',
+  ];
 
   const handleReject = async () => {
     if (!selectedOrder) return;
@@ -316,7 +466,7 @@ export const AdminDashboardPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight">
-            Panel de Administración TEDx Innova
+            Panel de Administración TEDx USFX
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
             Gestión de pagos bancarios, conferencistas, plantillas de certificados y tarifas oficiales en Bs.
@@ -363,6 +513,26 @@ export const AdminDashboardPage: React.FC = () => {
           >
             <Ticket className="w-4 h-4" />
             <span>Entradas y Precios (Bs)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveAdminTab('payment')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+              activeAdminTab === 'payment' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <QrCode className="w-4 h-4" />
+            <span>Configuración Pago QR</span>
+          </button>
+
+          <button
+            onClick={() => setActiveAdminTab('backgrounds')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+              activeAdminTab === 'backgrounds' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Image className="w-4 h-4" />
+            <span>Imágenes de Fondo</span>
           </button>
         </div>
       </div>
@@ -506,7 +676,7 @@ export const AdminDashboardPage: React.FC = () => {
 
                         <td className="px-6 py-4">
                           <p className="font-medium text-white">{o.buyerName}</p>
-                          <p className="text-xs text-zinc-400">{o.buyerEmail}</p>
+                          <p className="text-xs text-zinc-400">WhatsApp: {o.buyerPhone}</p>
                           <p className="text-xs text-zinc-400">CI: {o.buyerDocumentId}</p>
                         </td>
 
@@ -582,7 +752,7 @@ export const AdminDashboardPage: React.FC = () => {
             <div>
               <h2 className="text-xl font-bold text-white flex items-center space-x-2">
                 <Users className="w-5 h-5 text-ted-red" />
-                <span>Oradores Oficiales de TEDx Innova</span>
+                <span>Oradores Oficiales de TEDx USFX</span>
               </h2>
               <p className="text-xs text-zinc-400 mt-1">
                 Añade o edita los disertantes que se presentan públicamente en la Landing Page con sus fotos de alta calidad.
@@ -828,6 +998,330 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       )}
 
+      {/* PESTAÑA 5: CONFIGURACIÓN DE PAGO POR CÓDIGO QR */}
+      {activeAdminTab === 'payment' && (
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+              <QrCode className="w-5 h-5 text-ted-red" />
+              <span>Código QR Oficial de Cobro</span>
+            </h2>
+            <p className="text-xs text-zinc-400 mt-1">
+              Sube la imagen del código QR neto al que los participantes pagarán sus entradas (Simple QR, BCP, BNB, etc.).
+              Este QR se presentará en alta resolución en el proceso de compra (Checkout).
+            </p>
+          </div>
+
+          {paymentMsg && (
+            <div
+              className={`p-4 rounded-xl text-xs flex items-center gap-2 border ${
+                paymentMsg.type === 'success'
+                  ? 'bg-emerald-950/80 text-emerald-200 border-emerald-800'
+                  : 'bg-red-950/80 text-red-200 border-red-800'
+              }`}
+            >
+              {paymentMsg.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+              )}
+              <span>{paymentMsg.text}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Columna Izquierda: Imagen y Subida de QR */}
+            <div className="lg:col-span-5 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-6">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                  Imagen del Código QR
+                </span>
+                {paymentSetting?.qrImageUrl && (
+                  <Badge variant="success">QR Activo en Sistema</Badge>
+                )}
+              </div>
+
+              {/* Vista previa del QR */}
+              <div className="flex flex-col items-center justify-center p-4 bg-zinc-950 rounded-xl border border-zinc-800 min-h-[260px]">
+                {qrPreview ? (
+                  <div className="text-center space-y-3">
+                    <div className="p-3 bg-white rounded-xl inline-block shadow-lg">
+                      <img
+                        src={qrPreview}
+                        alt="Nuevo QR seleccionado"
+                        className="w-52 h-52 object-contain"
+                      />
+                    </div>
+                    <p className="text-xs text-amber-400 font-medium">
+                      Nuevo archivo seleccionado listo para guardar
+                    </p>
+                  </div>
+                ) : paymentSetting?.qrImageUrl ? (
+                  <div className="text-center space-y-3">
+                    <div className="p-3 bg-white rounded-xl inline-block shadow-lg">
+                      <img
+                        src={paymentSetting.qrImageUrl}
+                        alt="Código QR Oficial"
+                        className="w-52 h-52 object-contain"
+                      />
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <a
+                        href={paymentSetting.qrImageUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 underline"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Ver en tamaño completo
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 px-4 space-y-3 text-zinc-500">
+                    <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center mx-auto text-zinc-600">
+                      <QrCode className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-300">Aún no has subido tu código QR</p>
+                      <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">
+                        Selecciona abajo tu imagen de cobro QR oficial (captura de Simple QR, BCP, etc.)
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Input para subir nuevo QR */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-zinc-300">
+                  {paymentSetting?.qrImageUrl ? 'Reemplazar Código QR (Imagen):' : 'Seleccionar Código QR (Imagen):'}
+                </label>
+                <div className="relative border-2 border-dashed border-zinc-700 hover:border-ted-red rounded-xl p-4 text-center cursor-pointer bg-zinc-950/60 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleQrFileChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="flex flex-col items-center gap-1.5 text-zinc-400">
+                    <Upload className="w-5 h-5 text-ted-red" />
+                    <span className="text-xs font-medium text-white">
+                      {qrFile ? qrFile.name : 'Haz clic para seleccionar imagen de QR'}
+                    </span>
+                    <span className="text-[10px] text-zinc-500">Formatos: PNG, JPG, WebP (Máx. 15MB)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Columna Derecha: Formulario de Configuración y Detalles */}
+            <div className="lg:col-span-7 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col justify-between space-y-6">
+              <form onSubmit={handleSavePaymentSettings} className="space-y-5">
+                <div className="border-b border-zinc-800 pb-3">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                    Detalles e Instrucciones para el Asistente
+                  </h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Esta información acompañará al código QR en la pantalla de pago de las entradas.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    Instrucciones de Pago al Escanear *
+                  </label>
+                  <textarea
+                    rows={4}
+                    required
+                    value={instructionsInput}
+                    onChange={(e) => setInstructionsInput(e.target.value)}
+                    placeholder="Ej. Escanea el código QR desde tu app bancaria móvil (Simple QR), transfiere el monto exacto en Bs y adjunta la captura de tu comprobante."
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs sm:text-sm text-white focus:outline-none focus:border-ted-red leading-relaxed"
+                  />
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    Sé claro sobre adjuntar la captura del comprobante con número de referencia o confirmación.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                      Titular o Razón Social (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={accountHolderInput}
+                      onChange={(e) => setAccountHolderInput(e.target.value)}
+                      placeholder="Ej. TEDx USFX / Fundación"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-ted-red"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                      Banco o Plataforma Emisora (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={bankNameInput}
+                      onChange={(e) => setBankNameInput(e.target.value)}
+                      placeholder="Ej. BCP / Banco Sol / Red Simple"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-ted-red"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5 flex items-center gap-1.5">
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>WhatsApp Oficial para Recibir Comprobantes</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={whatsappContactInput}
+                    onChange={(e) => setWhatsappContactInput(e.target.value)}
+                    placeholder="Ej. 78687799 o 59178687799"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-ted-red font-mono"
+                  />
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    Número al que se dirigirán los compradores con el botón 'Enviar Comprobante por WhatsApp' con los datos de su orden.
+                  </p>
+                </div>
+
+                {/* Banner de Previsualización */}
+                <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-4 space-y-2">
+                  <span className="text-[11px] font-bold text-ted-red uppercase tracking-wider block">
+                    Resumen de lo que verá el comprador:
+                  </span>
+                  <p className="text-xs text-zinc-300 italic">
+                    "{instructionsInput || 'Escanea el código QR oficial y sube tu comprobante.'}"
+                  </p>
+                  {(accountHolderInput || bankNameInput) && (
+                    <div className="text-[11px] text-zinc-400 pt-1 flex items-center gap-2">
+                      <span className="font-semibold text-zinc-200">Receptor:</span>
+                      <span>{[accountHolderInput, bankNameInput].filter(Boolean).join(' • ')}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-zinc-800 flex items-center justify-end">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    type="submit"
+                    disabled={paymentLoading}
+                    className="bg-ted-red hover:bg-red-700 text-white font-bold px-6 shadow-lg shadow-ted-red/20"
+                  >
+                    {paymentLoading ? (
+                      'Guardando Cambios...'
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2 inline" />
+                        <span>Guardar Código QR y Datos</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PESTAÑA 6: IMÁGENES DE FONDO DINÁMICAS */}
+      {activeAdminTab === 'backgrounds' && (
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+              <Image className="w-5 h-5 text-ted-red" />
+              <span>Imágenes de Fondo Dinámicas (Landing Page)</span>
+            </h2>
+            <p className="text-xs text-zinc-400 mt-1">
+              Sube fotos del Teatro Gran Mariscal, eventos previos o tomas de la USFX. Se reproducirán en bucle en el fondo de la pantalla de bienvenida.
+            </p>
+          </div>
+
+          {bgMsg && (
+            <div className={`p-4 rounded-xl text-xs flex items-center gap-2 border ${
+              bgMsg.startsWith('Error') ? 'bg-red-950/80 text-red-200 border-red-800' : 'bg-emerald-950/80 text-emerald-200 border-emerald-800'
+            }`}>
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{bgMsg}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 h-fit space-y-4">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Subir Nueva Foto</h3>
+              <form onSubmit={handleUploadBackground} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Título / Descripción</label>
+                  <input
+                    type="text"
+                    value={bgTitleInput}
+                    onChange={(e) => setBgTitleInput(e.target.value)}
+                    placeholder="Ej. Teatro Gran Mariscal - Vista Aérea"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Archivo de Imagen *</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    required
+                    onChange={(e) => setBgUploadFile(e.target.files?.[0] || null)}
+                    className="w-full text-xs text-zinc-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-zinc-800 file:text-white"
+                  />
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="md"
+                  type="submit"
+                  disabled={bgLoading}
+                  className="w-full bg-ted-red hover:bg-red-700 text-white font-bold"
+                >
+                  {bgLoading ? 'Subiendo...' : 'Agregar Imagen de Fondo'}
+                </Button>
+              </form>
+            </div>
+
+            <div className="lg:col-span-2 space-y-4">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Imágenes Activas ({backgroundImages.length})</h3>
+              {backgroundImages.length === 0 ? (
+                <div className="p-8 text-center bg-zinc-900 border border-zinc-800 rounded-2xl text-zinc-500 text-xs">
+                  No hay fotos de fondo configuradas. Sube una a la izquierda para activar el carrusel de fondo.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {backgroundImages.map((img) => (
+                    <div key={img.id} className="relative group bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-lg">
+                      <div className="aspect-video bg-zinc-950">
+                        <img src={img.imageUrl} alt={img.title || 'Fondo'} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="p-3 flex items-center justify-between">
+                        <span className="text-xs text-zinc-300 font-medium truncate max-w-[180px]">{img.title || 'Sin título'}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteBackground(img.id)}
+                          className="text-red-400 border-zinc-800 hover:bg-red-950/40 p-1.5 h-auto"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: Crear/Editar Speaker */}
       {speakerModalOpen && (
         <Modal
@@ -1061,13 +1555,13 @@ export const AdminDashboardPage: React.FC = () => {
         </Modal>
       )}
 
-      {/* MODAL: Inspección de Orden y Validación */}
+      {/* MODAL: Inspección de Orden y Validación Express */}
       {selectedOrder && (
         <Modal
           isOpen={Boolean(selectedOrder)}
           onClose={() => setSelectedOrder(null)}
-          title={`Revisión de Orden: ${selectedOrder?.orderNumber}`}
-          maxWidth="2xl"
+          title={`Validación Express de Orden: #${selectedOrder?.orderNumber}`}
+          maxWidth="4xl"
         >
           <div className="space-y-6">
             {actionMessage && (
@@ -1083,112 +1577,181 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs">
-              <div>
-                <span className="text-zinc-400 block">Comprador:</span>
-                <span className="font-bold text-white">{selectedOrder.buyerName}</span>
-              </div>
-              <div>
-                <span className="text-zinc-400 block">Total a Pagar:</span>
-                <span className="font-bold font-mono text-emerald-400 text-sm">
-                  Bs {selectedOrder.totalAmount.toFixed(2)}
-                </span>
-              </div>
-              <div>
-                <span className="text-zinc-400 block">Referencia Bancaria:</span>
-                <span className="font-mono text-zinc-300">
-                  {selectedOrder.proofReferenceNumber || 'No reportada'}
-                </span>
-              </div>
-              <div>
-                <span className="text-zinc-400 block">Estado Actual:</span>
-                <Badge status={selectedOrder.status} />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                Comprobante de Pago Adjuntado
-              </label>
-              {selectedOrder.proofReceiptUrl ? (
-                selectedOrder.proofReceiptUrl.endsWith('.pdf') ? (
-                  <div className="p-6 text-center border border-zinc-800 rounded-xl bg-zinc-950 space-y-3">
-                    <p className="text-sm text-zinc-300">Archivo PDF subido por el comprador</p>
+            {/* Vista Dividida (Split Screen): Comprobante vs. Datos de la Orden */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Columna Izquierda: Comprobante Visual */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                    Comprobante Adjunto
+                  </label>
+                  {selectedOrder.proofReceiptUrl && (
                     <a
                       href={selectedOrder.proofReceiptUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block"
+                      className="text-xs text-ted-red hover:underline inline-flex items-center gap-1 font-semibold"
                     >
-                      <Button size="sm" variant="outline" leftIcon={<ExternalLink className="w-3.5 h-3.5" />}>
-                        Abrir Documento PDF en Nueva Pestaña
-                      </Button>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Abrir en grande</span>
+                    </a>
+                  )}
+                </div>
+
+                {selectedOrder.proofReceiptUrl ? (
+                  selectedOrder.proofReceiptUrl.endsWith('.pdf') ? (
+                    <div className="p-8 text-center border border-zinc-800 rounded-2xl bg-zinc-950 space-y-4">
+                      <p className="text-sm font-semibold text-white">Comprobante en formato PDF</p>
+                      <a
+                        href={selectedOrder.proofReceiptUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block"
+                      >
+                        <Button size="sm" variant="outline" leftIcon={<ExternalLink className="w-3.5 h-3.5" />}>
+                          Abrir PDF en Nueva Ventana
+                        </Button>
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="border border-zinc-800 rounded-2xl overflow-hidden bg-zinc-950 p-2 flex items-center justify-center min-h-[260px] max-h-[380px]">
+                      <img
+                        src={selectedOrder.proofReceiptUrl}
+                        alt="Comprobante"
+                        className="max-h-[360px] w-auto object-contain rounded-xl shadow-lg"
+                      />
+                    </div>
+                  )
+                ) : (
+                  <div className="p-8 text-center text-xs text-zinc-400 border border-dashed border-zinc-800 rounded-2xl bg-zinc-950/60 min-h-[200px] flex flex-col items-center justify-center">
+                    <AlertCircle className="w-8 h-8 text-zinc-600 mb-2" />
+                    <p className="font-semibold text-zinc-300">Sin comprobante subido en web</p>
+                    <p className="text-zinc-500 mt-1 max-w-[220px]">
+                      {selectedOrder.paymentMethod === 'CASH'
+                        ? 'Cobro en efectivo realizado en mesa por voluntario.'
+                        : 'El comprobante puede haber sido enviado directamente por WhatsApp.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Columna Derecha: Datos del Comprador y Acreditación */}
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+                  <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                    <span className="text-xs text-zinc-400">Total a Validar</span>
+                    <span className="text-2xl font-black text-emerald-400 font-mono">
+                      Bs {selectedOrder.totalAmount.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-zinc-500 block">Comprador</span>
+                      <strong className="text-white">{selectedOrder.buyerName}</strong>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block">CI / Cédula</span>
+                      <strong className="text-white font-mono">{selectedOrder.buyerDocumentId}</strong>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block">Celular / WhatsApp</span>
+                      <span className="text-zinc-300 font-mono">{selectedOrder.buyerPhone}</span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block">Referencia</span>
+                      <span className="text-amber-400 font-mono font-bold">
+                        {selectedOrder.proofReferenceNumber || 'Sin referencia'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Botón rápido para contactar al comprador por WhatsApp */}
+                  <div className="pt-2 border-t border-zinc-800/80">
+                    <a
+                      href={getBuyerWhatsAppLink()}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700 text-emerald-300 text-xs font-semibold transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>Contactar al Comprador por WhatsApp</span>
                     </a>
                   </div>
-                ) : (
-                  <div className="border border-zinc-800 rounded-xl overflow-hidden bg-zinc-950 flex justify-center p-2">
-                    <img
-                      src={selectedOrder.proofReceiptUrl}
-                      alt="Comprobante"
-                      className="max-h-96 object-contain rounded-lg"
-                    />
-                  </div>
-                )
-              ) : (
-                <div className="p-6 text-center text-xs text-zinc-400 border border-zinc-800 rounded-xl bg-zinc-950">
-                  {selectedOrder.paymentMethod === 'CASH'
-                    ? 'Pago realizado en efectivo directamente al voluntario en mesa.'
-                    : 'El comprador aún no ha subido su comprobante.'}
                 </div>
-              )}
-            </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                Asistentes a Emitir ({selectedOrder.tickets?.length || 0})
-              </label>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {selectedOrder.tickets?.map((t) => (
-                  <div
-                    key={t.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-zinc-950 border border-zinc-800 text-xs"
-                  >
-                    <div>
-                      <span className="font-bold text-white">{t.attendeeName}</span>
-                      <span className="text-zinc-400 ml-2 font-mono">CI: {t.attendeeDocumentId}</span>
-                    </div>
-                    <Badge variant="neutral">
-                      {t.ticketType.name}
-                    </Badge>
+                {/* Lista de Boletos y Asistentes */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                      Asistentes ({selectedOrder.tickets?.length || 0})
+                    </label>
+                    <Badge status={selectedOrder.status} />
                   </div>
-                ))}
+
+                  <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                    {selectedOrder.tickets?.map((t, idx) => (
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-xs"
+                      >
+                        <div>
+                          <span className="font-bold text-white">#{idx + 1} {t.attendeeName}</span>
+                          <span className="text-zinc-400 ml-2 font-mono">CI: {t.attendeeDocumentId}</span>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 font-medium border border-zinc-700">
+                          {t.ticketType?.name || 'Entrada'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
+            {/* Acciones de Validación Express */}
             <div className="pt-4 border-t border-zinc-800 space-y-4">
               {selectedOrder.status !== 'APPROVED' ? (
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs text-zinc-400 mb-1">
-                      Nota o comentario para el comprador (Opcional):
+                  {/* Píldoras Rápidas de Rechazo */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                      Motivos Rápidos de Rechazo (1 Clic):
                     </label>
+                    <div className="flex flex-wrap gap-2">
+                      {quickRejectPills.map((pill) => (
+                        <button
+                          key={pill}
+                          type="button"
+                          onClick={() => setRejectReason(pill)}
+                          className={`text-xs px-2.5 py-1 rounded-lg border transition-all ${
+                            rejectReason === pill
+                              ? 'bg-red-900/60 border-red-500 text-red-200'
+                              : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                          }`}
+                        >
+                          {pill}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
                       type="text"
                       value={adminNotes}
                       onChange={(e) => setAdminNotes(e.target.value)}
-                      placeholder="Ej. Transferencia confirmada en cuenta."
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-ted-red"
+                      placeholder="Nota interna de aprobación (Opcional)..."
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-ted-red"
                     />
-                  </div>
 
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div className="flex-1 flex gap-2 w-full">
+                    <div className="flex gap-2">
                       <input
                         type="text"
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
-                        placeholder="Motivo si vas a rechazar (ej. Comprobante ilegible)..."
-                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500"
+                        placeholder="Razón de rechazo..."
+                        className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500"
                       />
                       <Button
                         variant="danger"
@@ -1199,22 +1762,37 @@ export const AdminDashboardPage: React.FC = () => {
                         Rechazar
                       </Button>
                     </div>
+                  </div>
+
+                  {/* Botones de Aprobación */}
+                  <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      size="md"
+                      isLoading={actionLoading}
+                      onClick={handleApprove}
+                      leftIcon={<CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                      className="w-full sm:w-auto"
+                    >
+                      Aprobar Orden
+                    </Button>
 
                     <Button
                       variant="primary"
                       size="md"
                       isLoading={actionLoading}
-                      onClick={handleApprove}
-                      leftIcon={<CheckCircle2 className="w-4 h-4" />}
-                      className="w-full sm:w-auto"
+                      onClick={handleApproveAndNotifyWhatsApp}
+                      leftIcon={<MessageCircle className="w-4 h-4" />}
+                      className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-950/40"
                     >
-                      Aprobar y Emitir Boletos
+                      Aprobar y Notificar por WhatsApp
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="text-center p-3 rounded-xl bg-emerald-950/40 border border-emerald-800 text-emerald-300 text-xs">
-                  Esta orden ya fue aprobada y los boletos con código QR fueron emitidos.
+                <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800 text-emerald-300 text-xs text-center flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Esta orden fue aprobada y los boletos con código QR están activos.</span>
                 </div>
               )}
             </div>

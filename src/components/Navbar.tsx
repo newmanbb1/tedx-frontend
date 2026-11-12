@@ -41,7 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 TED<span className="text-xl align-super">x</span>
               </span>
               <span className="ml-2 text-2xl font-bold text-white tracking-tight">
-                Innova
+                USFX
               </span>
             </div>
             <span className="hidden md:inline-block ml-3 px-2 py-0.5 text-[11px] font-semibold text-zinc-400 bg-zinc-800/80 rounded border border-zinc-700/60 uppercase tracking-widest">
@@ -194,7 +194,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => handleNav('certificates')}
             className="block w-full text-left py-2 text-base font-medium text-ted-red font-semibold"
           >
-            🎓 Certificados Digitales (Asistencia)
+            Certificados Digitales (Asistencia)
           </button>
 
           {user ? (

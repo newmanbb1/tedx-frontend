@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   AlertTriangle,
   CreditCard,
+  MessageCircle,
 } from 'lucide-react';
 
 export function ValidatorDashboardPage() {
@@ -108,6 +109,25 @@ export function ValidatorDashboardPage() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleApproveAndNotifyWhatsApp = async () => {
+    if (!selectedOrder) return;
+    const buyerPhone = selectedOrder.buyerPhone.replace(/\D/g, '');
+    const phone = buyerPhone.length === 8 ? `591${buyerPhone}` : buyerPhone;
+    const msg = `Hola *${selectedOrder.buyerName}*:\nTu orden *#${selectedOrder.orderNumber}* para *TEDx USFX 2026* ha sido APROBADA exitosamente.\n\nPuedes consultar tus credenciales oficiales con código QR para el Teatro Gran Mariscal aquí:\n${window.location.origin}/?order=${selectedOrder.orderNumber}\n\nTe esperamos el Sábado 21 de Noviembre a las 9:30 AM.`;
+    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+
+    await handleApprove();
+    window.open(waUrl, '_blank');
+  };
+
+  const getBuyerWhatsAppLink = () => {
+    if (!selectedOrder) return '#';
+    const buyerPhone = selectedOrder.buyerPhone.replace(/\D/g, '');
+    const phone = buyerPhone.length === 8 ? `591${buyerPhone}` : buyerPhone;
+    const msg = `Hola *${selectedOrder.buyerName}*! Nos comunicamos del equipo de validación de *TEDx USFX 2026* con respecto a tu orden *#${selectedOrder.orderNumber}*.`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
   };
 
   const handleReject = async () => {
@@ -387,24 +407,38 @@ export function ValidatorDashboardPage() {
         >
           <div className="space-y-6">
             {/* Detalle Comprador */}
-            <div className="bg-zinc-950 p-4 rounded-lg border border-zinc-800 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <div>
-                <span className="text-zinc-500 block">Comprador:</span>
-                <span className="font-bold text-white text-sm">{selectedOrder.buyerName}</span>
+            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <span className="text-zinc-500 block">Comprador:</span>
+                  <span className="font-bold text-white text-sm">{selectedOrder.buyerName}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 block">Carnet (CI):</span>
+                  <span className="font-mono text-zinc-200">{selectedOrder.buyerDocumentId}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 block">WhatsApp:</span>
+                  <span className="font-mono text-zinc-200">{selectedOrder.buyerPhone}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 block">Monto esperado:</span>
+                  <span className="font-black text-emerald-400 text-sm">
+                    Bs {selectedOrder.totalAmount.toFixed(2)}
+                  </span>
+                </div>
               </div>
-              <div>
-                <span className="text-zinc-500 block">Carnet (CI):</span>
-                <span className="font-mono text-zinc-200">{selectedOrder.buyerDocumentId}</span>
-              </div>
-              <div>
-                <span className="text-zinc-500 block">WhatsApp:</span>
-                <span className="font-mono text-zinc-200">{selectedOrder.buyerPhone}</span>
-              </div>
-              <div>
-                <span className="text-zinc-500 block">Monto esperado:</span>
-                <span className="font-black text-emerald-400 text-sm">
-                  Bs {selectedOrder.totalAmount.toFixed(2)}
-                </span>
+
+              <div className="pt-2 border-t border-zinc-800 flex justify-end">
+                <a
+                  href={getBuyerWhatsAppLink()}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 py-1 px-3 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700 text-emerald-300 text-xs font-semibold transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>Contactar al Comprador por WhatsApp</span>
+                </a>
               </div>
             </div>
 
@@ -502,27 +536,38 @@ export function ValidatorDashboardPage() {
                 Liberar orden
               </Button>
 
-              <div className="flex items-center space-x-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowRejectModal(true)}
                   disabled={actionLoading}
-                  className="w-full sm:w-auto border-red-900 text-red-400 hover:bg-red-950 text-xs"
+                  className="border-red-900 text-red-400 hover:bg-red-950 text-xs"
                 >
                   <XCircle className="w-4 h-4 mr-1" />
                   Rechazar Depósito
                 </Button>
 
                 <Button
-                  variant="primary"
+                  variant="outline"
                   size="sm"
                   onClick={handleApprove}
                   disabled={actionLoading}
-                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                  className="text-xs"
                 >
-                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                  Aprobar y Generar QRs
+                  <CheckCircle2 className="w-4 h-4 mr-1 text-emerald-400" />
+                  Aprobar
+                </Button>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleApproveAndNotifyWhatsApp}
+                  disabled={actionLoading}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-950/40"
+                >
+                  <MessageCircle className="w-4 h-4 mr-1" />
+                  Aprobar y Notificar por WhatsApp
                 </Button>
               </div>
             </div>

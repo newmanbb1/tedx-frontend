@@ -77,11 +77,11 @@ export function CertificatesPortalPage({ initialCode, onGoHome }: CertificatesPo
       ctx.lineWidth = 3;
       ctx.strokeRect(70, 70, 1780, 940);
 
-      // 2. Logo TEDx Innova
+      // 2. Logo TEDx USFX
       ctx.fillStyle = '#EB0028';
       ctx.font = 'bold 64px Inter, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('TEDx Innova', 960, 170);
+      ctx.fillText('TEDx USFX', 960, 170);
 
       // Subtítulo
       ctx.fillStyle = '#A1A1AA';
@@ -120,7 +120,7 @@ export function CertificatesPortalPage({ initialCode, onGoHome }: CertificatesPo
       ctx.fillStyle = '#E4E4E7';
       ctx.font = '300 28px Inter, sans-serif';
       ctx.fillText(
-        'Por su destacada participación en el evento oficial "TEDx Innova: Fronteras del Pensamiento",',
+        'Por su destacada participación en el evento oficial "TEDx USFX: Fronteras del Pensamiento",',
         960,
         620
       );
@@ -150,7 +150,7 @@ export function CertificatesPortalPage({ initialCode, onGoHome }: CertificatesPo
       ctx.fillText('Lic. María Morales', 500, 925);
       ctx.fillStyle = '#71717A';
       ctx.font = '400 18px Inter, sans-serif';
-      ctx.fillText('Directora General TEDx Innova', 500, 955);
+      ctx.fillText('Directora General TEDx USFX', 500, 955);
 
       // Línea Firma 2
       ctx.beginPath();
@@ -163,7 +163,7 @@ export function CertificatesPortalPage({ initialCode, onGoHome }: CertificatesPo
       ctx.fillText('Comité Académico & Curaduría', 1420, 925);
       ctx.fillStyle = '#71717A';
       ctx.font = '400 18px Inter, sans-serif';
-      ctx.fillText('Fundación TEDx Innova', 1420, 955);
+      ctx.fillText('Fundación TEDx USFX', 1420, 955);
 
       // 7. QR de Validación Único al Centro Inferior
       if (certificate.qrDataUrl) {
@@ -301,7 +301,7 @@ export function CertificatesPortalPage({ initialCode, onGoHome }: CertificatesPo
           Portal de Certificados Digitales
         </h1>
         <p className="text-sm sm:text-base text-zinc-400">
-          Consulta y descarga tu certificado oficial de asistencia a <strong>TEDx Innova 2026</strong> con código QR de verificación único e irrepetible.
+          Consulta y descarga tu certificado oficial de asistencia a <strong>TEDx USFX 2026</strong> con código QR de verificación único e irrepetible.
         </p>
       </div>
 
@@ -401,7 +401,7 @@ export function CertificatesPortalPage({ initialCode, onGoHome }: CertificatesPo
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-zinc-400 pt-2">
               <div className="flex items-center space-x-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Autenticado digitalmente por TEDx Innova</span>
+                <span>Autenticado digitalmente por TEDx USFX</span>
               </div>
 
               <button
@@ -437,7 +437,7 @@ export function CertificatesPortalPage({ initialCode, onGoHome }: CertificatesPo
                   Certificado Oficial y Válido
                 </h4>
                 <p className="text-[11px] text-zinc-400">
-                  Este documento fue emitido por la organización oficial de TEDx Innova.
+                  Este documento fue emitido por la organización oficial de TEDx USFX.
                 </p>
               </div>
 
