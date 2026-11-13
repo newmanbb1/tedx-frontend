@@ -332,7 +332,7 @@ export const AdminDashboardPage: React.FC = () => {
         return {
           label: 'Validador de Pagos',
           badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-          desc: 'Revisión y aprobación de transferencias bancarias en cola.',
+          desc: 'Revisión y aprobación de comprobantes y pagos QR en cola.',
         };
       case 'VOLUNTEER':
         return {

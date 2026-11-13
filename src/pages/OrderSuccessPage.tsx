@@ -263,8 +263,8 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
                 {order.status === 'APPROVED'
                   ? 'Tu pago QR ha sido verificado con éxito. Presenta tu código QR en puerta el día del evento en el Teatro Gran Mariscal.'
                   : order.status === 'PAYMENT_SUBMITTED'
-                  ? 'Hemos registrado tu reporte de pago. El equipo organizador está validando la transferencia. Te notificaremos al aprobarse.'
-                  : 'Realiza la transferencia por Simple QR y envía tu comprobante por WhatsApp o en la plataforma para emitir tus credenciales.'}
+                  ? 'Hemos registrado tu comprobante de pago. El equipo organizador está validando el pago por QR. Te notificaremos al aprobarse.'
+                  : 'Realiza el pago escaneando el código QR oficial y envía tu comprobante para emitir tus credenciales.'}
               </p>
             </div>
 

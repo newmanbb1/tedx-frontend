@@ -15,7 +15,7 @@ import {
   ExternalLink,
   ShieldCheck,
   AlertTriangle,
-  CreditCard,
+  QrCode,
   MessageCircle,
 } from 'lucide-react';
 
@@ -246,13 +246,13 @@ export function ValidatorDashboardPage() {
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-zinc-500 text-sm">Cargando cola de transferencias...</div>
+          <div className="p-12 text-center text-zinc-500 text-sm">Cargando cola de pagos y comprobantes...</div>
         ) : orders.length === 0 ? (
           <div className="p-12 text-center space-y-3">
             <CheckCircle2 className="w-12 h-12 text-emerald-500/80 mx-auto" />
-            <h3 className="text-lg font-bold text-white">¡Cola al día!</h3>
+            <h3 className="text-lg font-bold text-white">Cola al día</h3>
             <p className="text-sm text-zinc-400 max-w-md mx-auto">
-              No hay transferencias bancarias pendientes de validación en este momento.
+              No hay comprobantes o pagos QR pendientes de validación en este momento.
             </p>
           </div>
         ) : (
@@ -445,7 +445,7 @@ export function ValidatorDashboardPage() {
             {/* Referencia Bancaria */}
             {selectedOrder.proofReferenceNumber && (
               <div className="p-3 bg-amber-950/40 border border-amber-800/80 rounded-lg flex items-center justify-between text-xs">
-                <span className="text-zinc-300">Número de referencia / transferencia indicado por el usuario:</span>
+                <span className="text-zinc-300">Número de referencia / transacción QR indicado:</span>
                 <span className="font-mono font-bold text-amber-300 text-sm">
                   {selectedOrder.proofReferenceNumber}
                 </span>
@@ -456,8 +456,8 @@ export function ValidatorDashboardPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center space-x-1">
-                  <CreditCard className="w-4 h-4 text-ted-red mr-1" />
-                  Comprobante bancario subido
+                  <QrCode className="w-4 h-4 text-ted-red mr-1" />
+                  Comprobante de pago QR subido
                 </label>
                 {selectedOrder.proofReceiptUrl && (
                   <a
@@ -519,7 +519,7 @@ export function ValidatorDashboardPage() {
                 type="text"
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
-                placeholder="Ej. Transferencia verificada en extracto Banco Metropolitano a las 11:20"
+                placeholder="Ej. Comprobante verificado en cuenta a las 11:20"
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-ted-red"
               />
             </div>

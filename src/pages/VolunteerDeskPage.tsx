@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { EventData, OrderData, VolunteerCashSummary } from '../types/index.js';
+import { EventData, OrderData, VolunteerCashSummary, PaymentSettingData } from '../types/index.js';
 import { api } from '../services/api.js';
 import { Button } from '../components/ui/Button.js';
 import { Badge } from '../components/ui/Badge.js';
+import { Modal } from '../components/ui/Modal.js';
 import confetti from 'canvas-confetti';
 import {
   Search,
@@ -15,18 +16,20 @@ import {
   AlertCircle,
   ExternalLink,
   Phone,
-  CreditCard,
   Banknote,
   RefreshCw,
   QrCode,
+  Eye,
 } from 'lucide-react';
 
 interface VolunteerDeskPageProps {
   event: EventData | null;
+  paymentSettings?: PaymentSettingData[];
 }
 
-export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
+export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageProps) {
   const [activeTab, setActiveTab] = useState<'lookup' | 'register' | 'cash'>('lookup');
+  const [showQrModal, setShowQrModal] = useState(false);
 
   // Pestaña Búsqueda
   const [searchCarnet, setSearchCarnet] = useState('');
@@ -145,6 +148,11 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
         setRegisterError(`Completa el nombre y carnet del asistente #${i + 1}`);
         return;
       }
+    }
+
+    if (paymentMethod === 'TRANSFER' && !receiptFile) {
+      setRegisterError('Debes adjuntar la foto o captura del comprobante de pago por QR');
+      return;
     }
 
     setRegisterLoading(true);
@@ -447,7 +455,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                   <div>
                     <span className="text-zinc-500 block">Método de Pago:</span>
                     <span className="font-semibold text-zinc-300">
-                      {order.paymentMethod === 'CASH' ? 'Efectivo presencial' : 'Transferencia bancaria'}
+                      {order.paymentMethod === 'CASH' ? 'Efectivo presencial' : 'Pago con QR'}
                     </span>
                   </div>
                 </div>
@@ -457,12 +465,12 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                   <div className="mx-3 sm:mx-5 p-3.5 sm:p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-2 text-xs">
                     {isSubmitted && (
                       <p className="text-amber-300">
-                        <strong>Aviso al comprador:</strong> El comprobante de transferencia bancaria fue recibido y está en la cola de revisión de los 5 validadores. En cuanto sea aprobado en el sistema, podrás presionar el botón de envío por WhatsApp.
+                        <strong>Aviso al comprador:</strong> El comprobante de pago con QR fue recibido y está en la cola de validación. En cuanto sea aprobado en el sistema, podrás presionar el botón de envío por WhatsApp.
                       </p>
                     )}
                     {isRejected && (
                       <p className="text-rose-300">
-                        <strong>Motivo de rechazo:</strong> {order.adminNotes || 'El comprobante no pudo ser validado en la cuenta bancaria.'}
+                        <strong>Motivo de rechazo:</strong> {order.adminNotes || 'El comprobante no pudo ser validado.'}
                       </p>
                     )}
                   </div>
@@ -585,7 +593,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
         </div>
       )}
 
-      {/* PESTAÑA 2: INSCRIBIR ASISTENTES (EFECTIVO O TRANSFERENCIA) */}
+      {/* PESTAÑA 2: INSCRIBIR ASISTENTES (EFECTIVO O PAGO CON QR) */}
       {activeTab === 'register' && (
         <form onSubmit={handleRegisterSubmit} className="space-y-6">
           <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl space-y-6">
@@ -595,7 +603,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                 <span>Inscripción Presencial de Asistentes</span>
               </h2>
               <p className="text-xs text-zinc-400 mt-1">
-                Registra a uno o más asistentes en el stand. Puedes cobrar en efectivo (se aprueba de inmediato) o subir comprobante de transferencia bancaria.
+                Registra a uno o más asistentes en el stand. Puedes cobrar en efectivo (se aprueba de inmediato) o registrar pago por QR adjuntando el comprobante.
               </p>
             </div>
 
@@ -816,7 +824,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                   </p>
                 </div>
 
-                {/* Opción Transferencia */}
+                {/* Opción Pago con QR */}
                 <div
                   onClick={() => setPaymentMethod('TRANSFER')}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
@@ -826,22 +834,39 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                   }`}
                 >
                   <div className="flex items-center space-x-2">
-                    <CreditCard className="w-5 h-5 text-amber-400" />
-                    <span className="font-bold text-white text-sm">Transferencia Bancaria</span>
+                    <QrCode className="w-5 h-5 text-amber-400" />
+                    <span className="font-bold text-white text-sm">Pago con QR</span>
                   </div>
                   <p className="text-xs text-zinc-400 mt-2">
-                    El comprador realizó una transferencia. Subes la foto del comprobante o referencia y se deriva a la cola de los <strong>5 validadores</strong>.
+                    El comprador realizó el pago escaneando el código QR oficial. Subes la foto o captura del comprobante para su validación.
                   </p>
                 </div>
               </div>
 
-              {/* Si es transferencia: subida de foto y referencia */}
+              {/* Si es QR: botón de ver QR, subida de comprobante y referencia */}
               {paymentMethod === 'TRANSFER' && (
-                <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-3 text-xs">
+                <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-4 text-xs">
+                  {paymentSettings && paymentSettings.length > 0 && paymentSettings[0]?.qrImageUrl && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-lg gap-2">
+                      <div className="flex items-center space-x-2 text-zinc-300">
+                        <QrCode className="w-4 h-4 text-ted-red shrink-0" />
+                        <span>¿El asistente necesita escanear el QR oficial en el stand?</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowQrModal(true)}
+                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium text-xs transition-colors self-start sm:self-auto cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Ver QR Oficial de Cobro</span>
+                      </button>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-zinc-400 block mb-1">
-                        Subir Comprobante (Foto o Captura)
+                      <label className="text-zinc-300 font-medium block mb-1">
+                        Subir Comprobante de Pago QR (Foto o Captura) *
                       </label>
                       <input
                         type="file"
@@ -849,11 +874,16 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                         onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
                         className="w-full text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer"
                       />
+                      {receiptFile && (
+                        <p className="text-emerald-400 text-[11px] mt-1 font-mono">
+                          Comprobante listo: {receiptFile.name}
+                        </p>
+                      )}
                     </div>
 
                     <div>
-                      <label className="text-zinc-400 block mb-1">
-                        Número de Referencia / Transferencia
+                      <label className="text-zinc-300 font-medium block mb-1">
+                        Número de Referencia o Transacción QR (Opcional)
                       </label>
                       <input
                         type="text"
@@ -891,7 +921,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                     <span>
                       {paymentMethod === 'CASH'
                         ? 'Confirmar Cobro en Efectivo y Aprobar'
-                        : 'Registrar y Derivar a Validación'}
+                        : 'Registrar Orden con Pago QR'}
                     </span>
                   </>
                 )}
@@ -1003,6 +1033,66 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
           </div>
         </div>
       )}
+
+      {/* Modal QR Oficial de Cobro */}
+      <Modal
+        isOpen={showQrModal}
+        onClose={() => setShowQrModal(false)}
+        title="Código QR Oficial de Cobro"
+      >
+        <div className="space-y-4 text-center">
+          {paymentSettings && paymentSettings[0]?.qrImageUrl ? (
+            <div className="flex flex-col items-center">
+              <div className="p-4 bg-white rounded-2xl inline-block shadow-xl border border-zinc-200">
+                <img
+                  src={paymentSettings[0].qrImageUrl}
+                  alt="QR Oficial TEDx"
+                  className="w-64 h-64 sm:w-72 sm:h-72 object-contain rounded-xl"
+                />
+              </div>
+              <div className="mt-4 text-xs text-zinc-300 space-y-1.5 bg-zinc-950 p-4 rounded-xl border border-zinc-800 w-full text-left">
+                {paymentSettings[0].accountHolder && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Titular de Cuenta:</span>
+                    <strong className="text-white font-mono">{paymentSettings[0].accountHolder}</strong>
+                  </div>
+                )}
+                {paymentSettings[0].bankName && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Entidad / Banco:</span>
+                    <strong className="text-white">{paymentSettings[0].bankName}</strong>
+                  </div>
+                )}
+                {paymentSettings[0].accountNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Nº de Cuenta:</span>
+                    <strong className="text-white font-mono">{paymentSettings[0].accountNumber}</strong>
+                  </div>
+                )}
+                {paymentSettings[0].instructions && (
+                  <p className="text-[11px] text-zinc-400 pt-1 border-t border-zinc-800 mt-2">
+                    {paymentSettings[0].instructions}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-zinc-400 text-xs bg-zinc-950 rounded-xl border border-zinc-800 space-y-2">
+              <QrCode className="w-8 h-8 text-zinc-600 mx-auto" />
+              <p>No se ha cargado un código QR en el panel de administración aún.</p>
+            </div>
+          )}
+          <div className="pt-2">
+            <Button
+              variant="secondary"
+              onClick={() => setShowQrModal(false)}
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold"
+            >
+              Cerrar
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

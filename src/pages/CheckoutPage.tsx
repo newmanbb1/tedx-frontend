@@ -580,7 +580,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 )}
               </div>
 
-              {/* Instrucciones y Datos de Transferencia */}
+              {/* Instrucciones y Datos de Pago QR */}
               <div className="flex-1 space-y-5 text-center md:text-left w-full">
                 <div className="space-y-1">
                   <div className="inline-flex items-center gap-1.5 text-ted-red text-xs font-bold uppercase tracking-wider">
@@ -588,7 +588,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                     <span>Pago Simple QR Móvil</span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-black text-white">
-                    Transfiere el Monto Exacto
+                    Paga el Monto Exacto
                   </h3>
                   <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
                     {bankInfo.instructions ||
@@ -599,7 +599,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 {/* Monto y Datos en Bolivianos */}
                 <div className="p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-zinc-400 font-semibold uppercase">Monto a Transferir:</span>
+                    <span className="text-xs text-zinc-400 font-semibold uppercase">Monto a Pagar:</span>
                     <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono">
                       Bs {totalAmount.toFixed(2)}
                     </span>

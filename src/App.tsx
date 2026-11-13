@@ -241,7 +241,7 @@ function AppContent() {
             onRequireLogin={handleRequireLogin}
             onNavigate={handleNavigate}
           >
-            <VolunteerDeskPage event={eventData} />
+            <VolunteerDeskPage event={eventData} paymentSettings={paymentSettings} />
           </ProtectedRoute>
         )}
 
