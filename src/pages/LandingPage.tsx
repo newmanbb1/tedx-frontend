@@ -369,9 +369,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
                   className={`absolute -top-24 -right-24 w-48 h-48 ${tier.glowColor} rounded-full blur-3xl pointer-events-none`}
                 />
 
-                {/* Cinta Lanyard Superior en la Tarjeta */}
-                <div className="w-[calc(100%+3rem)] sm:w-[calc(100%+4rem)] h-3.5 pattern-lanyard-ribbon -mt-6 sm:-mt-8 -mx-6 sm:-mx-8 mb-5 border-b border-ted-red/30 shadow-sm" />
-
                 <div>
                   {/* Badge de Categoría y TEDx Pass */}
                   <div className="flex items-center justify-between gap-2 mb-4">

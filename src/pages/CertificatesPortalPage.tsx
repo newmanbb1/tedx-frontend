@@ -281,9 +281,6 @@ export function CertificatesPortalPage({ initialCode, onGoHome }: CertificatesPo
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
-      {/* Cinta Lanyard Superior en Certificados */}
-      <div className="max-w-3xl mx-auto w-full h-3 pattern-lanyard-ribbon rounded-full border border-ted-red/30 shadow-sm" />
-
       <div className="max-w-3xl mx-auto flex items-center justify-start">
         <button
           onClick={onGoHome}

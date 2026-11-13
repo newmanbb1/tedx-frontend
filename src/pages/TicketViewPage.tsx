@@ -128,9 +128,6 @@ export const TicketViewPage: React.FC<TicketViewPageProps> = ({ ticketCode, onBa
 
       {/* Credencial Oficial TEDx USFX */}
       <div className="bg-zinc-900 border-2 border-ted-red/60 rounded-3xl overflow-hidden shadow-2xl shadow-ted-red/20 print:border-black print:text-black print:bg-white">
-        {/* Cinta Lanyard Superior en Credencial */}
-        <div className="w-full h-6 sm:h-7 pattern-lanyard-ribbon border-b border-ted-red/40 shadow-sm" />
-
         {/* Cabecera Gráfica de la Credencial */}
         <div className="bg-gradient-to-r from-black via-zinc-900 to-black p-6 border-b border-zinc-800 text-center relative">
           <div className="flex items-baseline justify-center tracking-tighter">

@@ -11,11 +11,8 @@ export const Footer: React.FC = () => {
   }, []);
 
   return (
-    <footer className="bg-zinc-950 border-t border-zinc-900 text-zinc-400">
-      {/* Cinta Lanyard Superior en Footer */}
-      <div className="w-full h-8 sm:h-9 pattern-lanyard-ribbon border-b border-zinc-900 shadow-inner" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <footer className="bg-zinc-950 border-t border-zinc-900 text-zinc-400 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-2.5">

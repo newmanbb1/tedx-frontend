@@ -111,9 +111,6 @@ export const StaffCheckInPage: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-      {/* Cinta Lanyard Superior */}
-      <div className="w-full h-3 pattern-lanyard-ribbon rounded-full border border-ted-red/30 shadow-sm" />
-
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
