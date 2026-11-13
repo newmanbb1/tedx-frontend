@@ -643,6 +643,29 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  const handleDeleteOrder = (orderId: string, orderNumber: string) => {
+    showConfirm({
+      title: `¿Eliminar Orden #${orderNumber}?`,
+      message: `¿Estás seguro de eliminar permanentemente la orden #${orderNumber}? Si la orden estaba aprobada, se repondrán los cupos y se eliminarán los boletos de prueba asociados.`,
+      confirmText: 'Eliminar Orden',
+      variant: 'danger',
+      onConfirm: async () => {
+        closeConfirm();
+        setActionLoading(true);
+        try {
+          const res = await api.deleteOrder(orderId);
+          setSelectedOrder(null);
+          showAlert(res.message || `Orden #${orderNumber} eliminada exitosamente.`, 'success', 'Orden Eliminada');
+          await loadData();
+        } catch (err: any) {
+          showAlert(err.message || 'Error al eliminar la orden', 'error', 'Error');
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
+  };
+
   // =====================
   // Acciones Speakers
   // =====================
@@ -1136,21 +1159,31 @@ export const AdminDashboardPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Botón de Acción Móvil */}
-                  <Button
-                    size="sm"
-                    variant={o.status === 'PAYMENT_SUBMITTED' ? 'primary' : 'outline'}
-                    leftIcon={<Eye className="w-4 h-4" />}
-                    className="w-full justify-center py-2.5 font-bold text-xs"
-                    onClick={() => {
-                      setSelectedOrder(o);
-                      setAdminNotes('');
-                      setRejectReason('');
-                      setActionMessage(null);
-                    }}
-                  >
-                    {o.status === 'PAYMENT_SUBMITTED' ? 'Revisar y Validar Comprobante' : 'Ver Detalles de Orden'}
-                  </Button>
+                  {/* Botones de Acción Móvil */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={o.status === 'PAYMENT_SUBMITTED' ? 'primary' : 'outline'}
+                      leftIcon={<Eye className="w-4 h-4" />}
+                      className="flex-1 justify-center py-2.5 font-bold text-xs"
+                      onClick={() => {
+                        setSelectedOrder(o);
+                        setAdminNotes('');
+                        setRejectReason('');
+                        setActionMessage(null);
+                      }}
+                    >
+                      {o.status === 'PAYMENT_SUBMITTED' ? 'Revisar y Validar' : 'Ver Detalles'}
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteOrder(o.id, o.orderNumber)}
+                      className="p-2.5 rounded-xl border border-zinc-800 text-zinc-500 hover:text-red-400 hover:bg-red-950/40 transition-colors shrink-0"
+                      title="Eliminar orden"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -1240,19 +1273,29 @@ export const AdminDashboardPage: React.FC = () => {
                         </td>
 
                         <td className="px-6 py-4 text-right">
-                          <Button
-                            size="sm"
-                            variant={o.status === 'PAYMENT_SUBMITTED' ? 'primary' : 'secondary'}
-                            leftIcon={<Eye className="w-3.5 h-3.5" />}
-                            onClick={() => {
-                              setSelectedOrder(o);
-                              setAdminNotes('');
-                              setRejectReason('');
-                              setActionMessage(null);
-                            }}
-                          >
-                            Revisar
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant={o.status === 'PAYMENT_SUBMITTED' ? 'primary' : 'secondary'}
+                              leftIcon={<Eye className="w-3.5 h-3.5" />}
+                              onClick={() => {
+                                setSelectedOrder(o);
+                                setAdminNotes('');
+                                setRejectReason('');
+                               setActionMessage(null);
+                              }}
+                            >
+                              Revisar
+                            </Button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteOrder(o.id, o.orderNumber)}
+                              className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/40 border border-transparent hover:border-red-900/40 transition-colors"
+                              title="Eliminar orden"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -2993,35 +3036,61 @@ export const AdminDashboardPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Botones de Aprobación */}
-                  <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
+                  {/* Botones de Aprobación y Eliminación */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                     <Button
                       variant="outline"
-                      size="md"
-                      isLoading={actionLoading}
-                      onClick={handleApprove}
-                      leftIcon={<CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-                      className="w-full sm:w-auto"
+                      size="sm"
+                      onClick={() => handleDeleteOrder(selectedOrder.id, selectedOrder.orderNumber)}
+                      leftIcon={<Trash2 className="w-4 h-4 text-rose-400" />}
+                      className="border-zinc-800 hover:border-rose-900 text-zinc-400 hover:text-rose-400 text-xs w-full sm:w-auto"
                     >
-                      Aprobar Orden
+                      Eliminar Orden
                     </Button>
 
-                    <Button
-                      variant="primary"
-                      size="md"
-                      isLoading={actionLoading}
-                      onClick={handleApproveAndNotifyWhatsApp}
-                      leftIcon={<MessageCircle className="w-4 h-4" />}
-                      className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-950/40"
-                    >
-                      Aprobar y Notificar por WhatsApp
-                    </Button>
+                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                      <Button
+                        variant="outline"
+                        size="md"
+                        isLoading={actionLoading}
+                        onClick={handleApprove}
+                        leftIcon={<CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                        className="w-full sm:w-auto"
+                      >
+                        Aprobar Orden
+                      </Button>
+
+                      <Button
+                        variant="primary"
+                        size="md"
+                        isLoading={actionLoading}
+                        onClick={handleApproveAndNotifyWhatsApp}
+                        leftIcon={<MessageCircle className="w-4 h-4" />}
+                        className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-950/40"
+                      >
+                        Aprobar y Notificar por WhatsApp
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800 text-emerald-300 text-xs text-center flex items-center justify-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>Esta orden fue aprobada y los boletos con código QR están activos.</span>
+                <div className="space-y-3">
+                  <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800 text-emerald-300 text-xs text-center flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>Esta orden fue aprobada y los boletos con código QR están activos.</span>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteOrder(selectedOrder.id, selectedOrder.orderNumber)}
+                      leftIcon={<Trash2 className="w-4 h-4 text-rose-400" />}
+                      className="border-zinc-800 hover:border-rose-900 text-zinc-400 hover:text-rose-400 text-xs"
+                    >
+                      Eliminar Orden de Prueba
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

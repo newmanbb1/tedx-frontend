@@ -192,6 +192,14 @@ export const api = {
     return handleResponse(res);
   },
 
+  async deleteOrder(orderId: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/admin/orders/${orderId}`, {
+      method: 'DELETE',
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
   async getAdminPaymentSettings(): Promise<{ paymentSetting: PaymentSettingData }> {
     const res = await fetch(`${API_BASE}/admin/payment-settings`, {
       headers: getAuthHeader(),
