@@ -733,6 +733,17 @@ export const AdminDashboardPage: React.FC = () => {
   const handleSponsorLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 50 * 1024 * 1024) {
+        setSponsorMsg({
+          type: 'error',
+          text: `El archivo "${file.name}" supera el límite máximo de 50MB (${(file.size / (1024 * 1024)).toFixed(1)}MB). Por favor selecciona una imagen más optimizada.`,
+        });
+        e.target.value = '';
+        setSponsorLogoFile(null);
+        setSponsorLogoPreview(null);
+        return;
+      }
+      setSponsorMsg(null);
       setSponsorLogoFile(file);
       const reader = new FileReader();
       reader.onload = () => setSponsorLogoPreview(reader.result as string);
@@ -748,6 +759,13 @@ export const AdminDashboardPage: React.FC = () => {
     }
     if (!sponsorLogoFile) {
       setSponsorMsg({ type: 'error', text: 'Por favor selecciona el archivo de imagen con el logo.' });
+      return;
+    }
+    if (sponsorLogoFile.size > 50 * 1024 * 1024) {
+      setSponsorMsg({
+        type: 'error',
+        text: 'El archivo seleccionado supera el límite de 50MB. Por favor sube una imagen optimizada.',
+      });
       return;
     }
 
