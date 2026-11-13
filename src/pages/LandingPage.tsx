@@ -6,7 +6,6 @@ import {
   Award,
   Maximize2,
   X,
-  Check,
   Crown,
   Star,
   Ticket,
@@ -62,15 +61,7 @@ const getTicketTierConfig = (name: string) => {
       iconColor: 'text-amber-400',
       glowColor: 'bg-amber-500/10',
       popular: false,
-      tagline: 'Experiencia exclusiva y acceso privado con los oradores.',
-      features: [
-        'Ubicación preferencial en primeras filas del teatro',
-        'Acceso exclusivo al Cóctel & Sala Privada de Speakers',
-        'Kit TEDx Oficial Premium (Edición Coleccionista)',
-        'Acreditación Fast-Track preferencial sin filas',
-        'Certificado Digital Oficial Verificado con QR',
-        'Coffee Break de alta gama & Networking VIP',
-      ],
+      tagline: 'Experiencia exclusiva y acceso preferencial.',
     };
   }
   if (upper.includes('VIP')) {
@@ -82,13 +73,6 @@ const getTicketTierConfig = (name: string) => {
       glowColor: 'bg-ted-red/15',
       popular: true,
       tagline: 'La opción predilecta para vivir la experiencia TEDx.',
-      features: [
-        'Asiento en sector preferencial del auditorio',
-        'Kit TEDx Oficial conmemorativo 2026',
-        'Acceso a Coffee Break y Dinámicas de Innovación',
-        'Certificado Digital Oficial con QR institucional',
-        'Networking con participantes y líderes locales',
-      ],
     };
   }
   return {
@@ -99,12 +83,6 @@ const getTicketTierConfig = (name: string) => {
     glowColor: 'bg-zinc-500/5',
     popular: false,
     tagline: 'Acceso a una jornada completa de ideas transformadoras.',
-    features: [
-      'Acceso completo a todas las conferencias magistrales',
-      'Kit oficial de bienvenida TEDx USFX',
-      'Certificado Digital Oficial de Asistencia con QR',
-      'Acceso a stands interactivos y feria del evento',
-    ],
   };
 };
 
@@ -431,40 +409,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
                     </div>
                     <span className="text-xs text-zinc-400 font-medium">/ persona</span>
                   </div>
-
-                  {/* Muescas decorativas de boleto / ticket stub */}
-                  <div className="relative my-6 -mx-6 sm:-mx-8">
-                    <div className="border-b border-dashed border-zinc-800" />
-                    <div className="absolute -left-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#0D0D0D] border-r border-zinc-800" />
-                    <div className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#0D0D0D] border-l border-zinc-800" />
-                  </div>
-
-                  {/* Lista de Beneficios y Accesos */}
-                  <div className="space-y-3 mb-6">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                      Beneficios incluidos:
-                    </p>
-                    <ul className="space-y-2.5">
-                      {tier.features.map((feat, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5 text-xs text-zinc-300">
-                          <div
-                            className={`mt-0.5 rounded-full p-0.5 shrink-0 ${
-                              tier.popular
-                                ? 'bg-ted-red/20 text-ted-red'
-                                : 'bg-emerald-500/20 text-emerald-400'
-                            }`}
-                          >
-                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                          </div>
-                          <span className="leading-tight">{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
                 </div>
 
                 {/* Contador y Selector de Cantidad */}
-                <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-between gap-3 mt-auto">
+                <div className="pt-6 mt-6 border-t border-zinc-800/80 flex items-center justify-between gap-3">
                   <div>
                     <span className="text-xs font-semibold block text-white">
                       {currentQty > 0
