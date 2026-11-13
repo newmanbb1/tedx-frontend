@@ -45,25 +45,18 @@ export const Navbar: React.FC<NavbarProps> = ({
       mobileMenuOpen ? 'bg-zinc-950' : 'bg-ted-black/90 backdrop-blur-md'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-20 gap-6">
           <div
-            className="flex items-center cursor-pointer group"
+            className="flex items-center cursor-pointer group shrink-0"
             onClick={() => handleNav('landing')}
           >
-            <div className="flex items-center gap-2.5">
-              <img
-                src="/tedx-x-logo.png"
-                alt="TEDx X Oficial"
-                className="w-8 h-8 object-contain group-hover:scale-110 transition-transform"
-              />
-              <div className="flex items-baseline tracking-tighter">
-                <span className="text-3xl font-black text-ted-red group-hover:scale-105 transition-transform">
-                  TED<span className="text-xl align-super">x</span>
-                </span>
-                <span className="ml-2 text-2xl font-bold text-white tracking-tight">
-                  USFX
-                </span>
-              </div>
+            <div className="flex items-baseline tracking-tighter">
+              <span className="text-3xl font-black text-ted-red group-hover:scale-105 transition-transform">
+                TED<span className="text-xl align-super">x</span>
+              </span>
+              <span className="ml-2 text-2xl font-bold text-white tracking-tight">
+                USFX
+              </span>
             </div>
           </div>
 

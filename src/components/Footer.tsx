@@ -15,20 +15,13 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-2.5">
-              <img
-                src="/tedx-x-logo.png"
-                alt="TEDx X Oficial"
-                className="w-7 h-7 object-contain"
-              />
-              <div className="flex items-baseline tracking-tighter">
-                <span className="text-2xl font-black text-ted-red">
-                  TED<span className="text-lg align-super">x</span>
-                </span>
-                <span className="ml-2 text-xl font-bold text-white tracking-tight">
-                  USFX
-                </span>
-              </div>
+            <div className="flex items-baseline tracking-tighter">
+              <span className="text-2xl font-black text-ted-red">
+                TED<span className="text-lg align-super">x</span>
+              </span>
+              <span className="ml-2 text-xl font-bold text-white tracking-tight">
+                USFX
+              </span>
             </div>
             <p className="text-sm text-zinc-400 max-w-md leading-relaxed">
               En el espíritu de las ideas que vale la pena difundir, TEDx es un programa de eventos locales auto-organizados que reúnen a personas para compartir una experiencia similar a TED.

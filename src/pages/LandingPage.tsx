@@ -189,7 +189,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-ted-red uppercase tracking-widest shadow-xl"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            Edición Oficial 2026 &bull; {event?.title || 'TEDx USFX'}
+            Edición Oficial 2026 &bull; {event?.title?.replace(/TEDx\s+Innova/gi, 'TEDx USFX') || 'TEDx USFX: Fronteras del Pensamiento'}
           </motion.div>
 
           <motion.h1
