@@ -30,9 +30,14 @@ import {
   Pause,
   Play,
   Sliders,
+  UserPlus,
+  EyeOff,
+  Shield,
 } from 'lucide-react';
 import {
   DashboardStats,
+  AdminUserData,
+  UserRole,
   OrderData,
   SpeakerData,
   CertificateTemplateData,
@@ -54,7 +59,7 @@ import { ConfirmModal } from '../components/ui/ConfirmModal.js';
 import { AlertModal } from '../components/ui/AlertModal.js';
 
 export const AdminDashboardPage: React.FC = () => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'speakers' | 'certificates' | 'tickets' | 'payment' | 'backgrounds' | 'whatsapp'>('orders');
+  const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'speakers' | 'certificates' | 'tickets' | 'payment' | 'backgrounds' | 'whatsapp' | 'users'>('orders');
 
   // Pestaña WhatsApp (Evolution API)
   const [waStatus, setWaStatus] = useState<WhatsAppInstanceStatus | null>(null);
@@ -148,6 +153,21 @@ export const AdminDashboardPage: React.FC = () => {
   const [bgTitleInput, setBgTitleInput] = useState('');
   const [bgLoading, setBgLoading] = useState(false);
   const [bgMsg, setBgMsg] = useState<string | null>(null);
+
+  // Pestaña Gestión de Usuarios y Roles del Sistema
+  const [usersList, setUsersList] = useState<AdminUserData[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userRoleFilter, setUserRoleFilter] = useState<string>('ALL');
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUserData | null>(null);
+  const [userFormName, setUserFormName] = useState('');
+  const [userFormEmail, setUserFormEmail] = useState('');
+  const [userFormPassword, setUserFormPassword] = useState('');
+  const [userFormRole, setUserFormRole] = useState<UserRole>('VALIDATOR');
+  const [showPassword, setShowPassword] = useState(false);
+  const [userActionLoading, setUserActionLoading] = useState(false);
+  const [userActionError, setUserActionError] = useState<string | null>(null);
 
   // Modals de Confirmación y Alerta UI (Reemplazo total de confirm y alert del navegador)
   const [confirmModalConfig, setConfirmModalConfig] = useState<{
@@ -285,6 +305,148 @@ export const AdminDashboardPage: React.FC = () => {
     } catch (err) {
       console.error('Error cargando fondos:', err);
     }
+  };
+
+  const loadUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const res = await api.getAdminUsers();
+      setUsersList(res.users);
+    } catch (err) {
+      console.error('Error cargando usuarios:', err);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const getUserRoleBadge = (role: UserRole) => {
+    switch (role) {
+      case 'ADMIN':
+        return {
+          label: 'Director / Admin',
+          badgeClass: 'bg-red-500/20 text-red-300 border-red-500/40',
+          desc: 'Control total de la plataforma, finanzas, ponentes y configuraciones.',
+        };
+      case 'VALIDATOR':
+        return {
+          label: 'Validador de Pagos',
+          badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+          desc: 'Revisión y aprobación de transferencias bancarias en cola.',
+        };
+      case 'VOLUNTEER':
+        return {
+          label: 'Mesa de Registro',
+          badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+          desc: 'Registro presencial en puerta, cobros en efectivo y WhatsApp.',
+        };
+      case 'CHECKIN':
+        return {
+          label: 'Escáner de Puerta',
+          badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+          desc: 'Acreditación y control de acceso con QR el día del evento.',
+        };
+      case 'STAFF':
+        return {
+          label: 'Staff General',
+          badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+          desc: 'Personal de apoyo operativo y logística.',
+        };
+    }
+  };
+
+  const handleOpenCreateUser = () => {
+    setEditingUser(null);
+    setUserFormName('');
+    setUserFormEmail('');
+    setUserFormPassword('');
+    setUserFormRole('VALIDATOR');
+    setShowPassword(false);
+    setUserActionError(null);
+    setUserModalOpen(true);
+  };
+
+  const handleOpenEditUser = (u: AdminUserData) => {
+    setEditingUser(u);
+    setUserFormName(u.name);
+    setUserFormEmail(u.email);
+    setUserFormPassword('');
+    setUserFormRole(u.role);
+    setShowPassword(false);
+    setUserActionError(null);
+    setUserModalOpen(true);
+  };
+
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUserActionError(null);
+
+    if (!userFormName.trim()) {
+      setUserActionError('El nombre completo es obligatorio.');
+      return;
+    }
+
+    if (!userFormEmail.trim() || !userFormEmail.includes('@')) {
+      setUserActionError('Debes ingresar un correo electrónico válido.');
+      return;
+    }
+
+    if (!editingUser && (!userFormPassword || userFormPassword.length < 6)) {
+      setUserActionError('La contraseña inicial debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    if (editingUser && userFormPassword && userFormPassword.length < 6) {
+      setUserActionError('La nueva contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    try {
+      setUserActionLoading(true);
+      if (editingUser) {
+        await api.updateAdminUser(editingUser.id, {
+          name: userFormName.trim(),
+          email: userFormEmail.trim().toLowerCase(),
+          role: userFormRole,
+          password: userFormPassword.trim() || undefined,
+        });
+        setUserModalOpen(false);
+        showAlert('El usuario ha sido actualizado exitosamente.', 'success', 'Usuario Actualizado');
+      } else {
+        await api.createAdminUser({
+          name: userFormName.trim(),
+          email: userFormEmail.trim().toLowerCase(),
+          password: userFormPassword.trim(),
+          role: userFormRole,
+        });
+        setUserModalOpen(false);
+        showAlert('El nuevo usuario ha sido registrado con sus credenciales de acceso.', 'success', 'Usuario Creado');
+      }
+      await loadUsers();
+    } catch (err: any) {
+      setUserActionError(err.message || 'Error al guardar usuario');
+    } finally {
+      setUserActionLoading(false);
+    }
+  };
+
+  const handleDeleteUser = (u: AdminUserData) => {
+    showConfirm({
+      title: '¿Eliminar usuario del sistema?',
+      message: `Estás a punto de eliminar a "${u.name}" (${u.email}) con rol de ${u.role}. Esta acción no se puede deshacer.`,
+      variant: 'danger',
+      confirmText: 'Sí, eliminar usuario',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        try {
+          closeConfirm();
+          await api.deleteAdminUser(u.id);
+          showAlert('El usuario fue removido exitosamente del sistema.', 'success', 'Usuario Eliminado');
+          await loadUsers();
+        } catch (err: any) {
+          showAlert(err.message || 'Error al eliminar usuario', 'error', 'No se pudo eliminar');
+        }
+      },
+    });
   };
 
   const loadWhatsAppQR = async () => {
@@ -448,9 +610,16 @@ export const AdminDashboardPage: React.FC = () => {
     loadTicketTypes();
     loadPaymentSettings();
     loadBackgrounds();
+    loadUsers();
     loadWhatsAppStatus(true);
     loadWhatsAppQueueStats();
   }, [statusFilter]);
+
+  useEffect(() => {
+    if (activeAdminTab === 'users') {
+      loadUsers();
+    }
+  }, [activeAdminTab]);
 
   // Temporizador anti-expiración de Código QR (cuenta regresiva de 25s que renueva el QR antes de que caduque)
   useEffect(() => {
@@ -981,6 +1150,21 @@ export const AdminDashboardPage: React.FC = () => {
                       : 'bg-rose-500'
                   }`}
                 />
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('users')}
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+                activeAdminTab === 'users' ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Users className="w-4 h-4 text-blue-400" />
+              <span>Gestión de Usuarios</span>
+              {usersList.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-zinc-800 text-[10px] text-zinc-300 font-mono">
+                  {usersList.length}
+                </span>
               )}
             </button>
           </div>
@@ -2503,6 +2687,421 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* PESTAÑA 8: GESTIÓN DE USUARIOS Y ROLES */}
+      {activeAdminTab === 'users' && (
+        <div className="space-y-6">
+          {/* Banner Superior con Acciones y Estadísticas */}
+          <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-5 sm:p-6 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ted-red uppercase tracking-widest">
+                  <Shield className="w-4 h-4 text-ted-red" />
+                  Control de Accesos & Equipo
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
+                  Gestión de Usuarios y Roles
+                </h2>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Administra las cuentas del equipo: administradores, validadores financieros, voluntarios de mesa y staff de acreditación.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={loadUsers}
+                  variant="outline"
+                  className="text-xs border-zinc-700 hover:bg-zinc-800 text-zinc-300"
+                  disabled={usersLoading}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${usersLoading ? 'animate-spin' : ''}`} />
+                  Refrescar
+                </Button>
+
+                <Button
+                  onClick={handleOpenCreateUser}
+                  className="bg-ted-red hover:bg-red-700 text-white font-bold text-xs shadow-lg shadow-ted-red/20 flex items-center gap-1.5"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Nuevo Usuario
+                </Button>
+              </div>
+            </div>
+
+            {/* Mini-Métricas de Roles */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-5 border-t border-zinc-800/80">
+              <div className="bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800/60">
+                <span className="text-[10px] uppercase font-bold text-zinc-500 block">Total Equipo</span>
+                <span className="text-xl font-black text-white font-mono">{usersList.length}</span>
+              </div>
+              <div className="bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800/60">
+                <span className="text-[10px] uppercase font-bold text-red-400 block">Admins</span>
+                <span className="text-xl font-black text-white font-mono">
+                  {usersList.filter((u) => u.role === 'ADMIN').length}
+                </span>
+              </div>
+              <div className="bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800/60">
+                <span className="text-[10px] uppercase font-bold text-amber-400 block">Validadores</span>
+                <span className="text-xl font-black text-white font-mono">
+                  {usersList.filter((u) => u.role === 'VALIDATOR').length}
+                </span>
+              </div>
+              <div className="bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800/60">
+                <span className="text-[10px] uppercase font-bold text-emerald-400 block">Voluntarios</span>
+                <span className="text-xl font-black text-white font-mono">
+                  {usersList.filter((u) => u.role === 'VOLUNTEER').length}
+                </span>
+              </div>
+              <div className="bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800/60 col-span-2 sm:col-span-1">
+                <span className="text-[10px] uppercase font-bold text-blue-400 block">Check-in / Staff</span>
+                <span className="text-xl font-black text-white font-mono">
+                  {usersList.filter((u) => u.role === 'CHECKIN' || u.role === 'STAFF').length}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Filtros por Rol y Buscador */}
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            {/* Pills de Roles */}
+            <div className="flex items-center overflow-x-auto no-scrollbar gap-1.5 p-1 bg-zinc-900/80 rounded-2xl border border-zinc-800">
+              {[
+                { key: 'ALL', label: 'Todos' },
+                { key: 'ADMIN', label: 'Admins' },
+                { key: 'VALIDATOR', label: 'Validadores' },
+                { key: 'VOLUNTEER', label: 'Voluntarios' },
+                { key: 'CHECKIN', label: 'Check-in' },
+                { key: 'STAFF', label: 'Staff' },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setUserRoleFilter(tab.key)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    userRoleFilter === tab.key
+                      ? 'bg-zinc-800 text-white shadow'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Buscador */}
+            <div className="relative flex-1 sm:max-w-xs">
+              <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={userSearchTerm}
+                onChange={(e) => setUserSearchTerm(e.target.value)}
+                placeholder="Buscar por nombre o email..."
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-ted-red transition-all"
+              />
+              {userSearchTerm && (
+                <button
+                  onClick={() => setUserSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Directorio de Usuarios */}
+          {usersLoading && usersList.length === 0 ? (
+            <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-12 text-center text-zinc-500 text-xs">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-ted-red" />
+              Cargando directorio de usuarios...
+            </div>
+          ) : (
+            <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
+              {/* Vista Desktop (Tabla) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-zinc-800 text-[10px] font-black uppercase tracking-wider text-zinc-400 bg-zinc-950/40">
+                      <th className="py-3.5 px-6">Usuario / Correo</th>
+                      <th className="py-3.5 px-4">Rol Asignado</th>
+                      <th className="py-3.5 px-4 text-center">Actividad Registrada</th>
+                      <th className="py-3.5 px-4">Fecha Creación</th>
+                      <th className="py-3.5 px-6 text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/60 text-xs">
+                    {usersList
+                      .filter((u) => {
+                        const matchesRole = userRoleFilter === 'ALL' || u.role === userRoleFilter;
+                        const matchesSearch =
+                          !userSearchTerm.trim() ||
+                          u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                          u.email.toLowerCase().includes(userSearchTerm.toLowerCase());
+                        return matchesRole && matchesSearch;
+                      })
+                      .map((u) => {
+                        const roleConfig = getUserRoleBadge(u.role);
+                        const totalActivity =
+                          (u._count?.ordersReviewed || 0) +
+                          (u._count?.ordersCollected || 0) +
+                          (u._count?.ticketsChecked || 0);
+
+                        return (
+                          <tr key={u.id} className="hover:bg-zinc-800/30 transition-colors">
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-white text-xs uppercase shrink-0">
+                                  {u.name.charAt(0)}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-white">{u.name}</p>
+                                  <p className="text-zinc-400 text-[11px] font-mono">{u.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleConfig.badgeClass}`}
+                              >
+                                <Shield className="w-3 h-3" />
+                                {roleConfig.label}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              {totalActivity > 0 ? (
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-[11px] font-mono text-zinc-300">
+                                  {u._count?.ordersReviewed ? `${u._count.ordersReviewed} val.` : ''}
+                                  {u._count?.ordersCollected ? ` ${u._count.ordersCollected} cobr.` : ''}
+                                  {u._count?.ticketsChecked ? ` ${u._count.ticketsChecked} chk.` : ''}
+                                </div>
+                              ) : (
+                                <span className="text-zinc-600 text-[11px] font-mono">—</span>
+                              )}
+                            </td>
+                            <td className="py-4 px-4 text-zinc-400 font-mono text-[11px]">
+                              {new Date(u.createdAt).toLocaleDateString('es-BO', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <div className="inline-flex items-center gap-1.5">
+                                <button
+                                  onClick={() => handleOpenEditUser(u)}
+                                  title="Editar usuario y rol"
+                                  className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(u)}
+                                  title="Eliminar usuario"
+                                  className="p-1.5 rounded-lg bg-zinc-800 hover:bg-red-950 text-zinc-400 hover:text-red-400 transition-all cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Vista Mobile (Tarjetas) */}
+              <div className="md:hidden divide-y divide-zinc-800/60">
+                {usersList
+                  .filter((u) => {
+                    const matchesRole = userRoleFilter === 'ALL' || u.role === userRoleFilter;
+                    const matchesSearch =
+                      !userSearchTerm.trim() ||
+                      u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                      u.email.toLowerCase().includes(userSearchTerm.toLowerCase());
+                    return matchesRole && matchesSearch;
+                  })
+                  .map((u) => {
+                    const roleConfig = getUserRoleBadge(u.role);
+                    return (
+                      <div key={u.id} className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-white text-xs uppercase shrink-0">
+                              {u.name.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-bold text-white text-sm">{u.name}</p>
+                              <p className="text-zinc-400 text-xs font-mono">{u.email}</p>
+                            </div>
+                          </div>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${roleConfig.badgeClass}`}
+                          >
+                            {roleConfig.label}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1">
+                          <span className="font-mono">
+                            Registrado: {new Date(u.createdAt).toLocaleDateString()}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenEditUser(u)}
+                              className="h-7 text-xs px-2.5 border-zinc-700 hover:bg-zinc-800"
+                            >
+                              <Edit2 className="w-3 h-3 mr-1" />
+                              Editar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteUser(u)}
+                              className="h-7 text-xs px-2.5 border-red-900/40 text-red-400 hover:bg-red-950/50"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {usersList.filter((u) => {
+                const matchesRole = userRoleFilter === 'ALL' || u.role === userRoleFilter;
+                const matchesSearch =
+                  !userSearchTerm.trim() ||
+                  u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                  u.email.toLowerCase().includes(userSearchTerm.toLowerCase());
+                return matchesRole && matchesSearch;
+              }).length === 0 && (
+                <div className="p-8 text-center text-zinc-500 text-xs">
+                  No se encontraron usuarios con el filtro o término de búsqueda aplicado.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODAL: Crear / Editar Usuario */}
+      {userModalOpen && (
+        <Modal
+          isOpen={userModalOpen}
+          onClose={() => setUserModalOpen(false)}
+          title={editingUser ? `Editar Usuario: ${editingUser.name}` : 'Crear Nuevo Usuario del Sistema'}
+        >
+          <form onSubmit={handleSaveUser} className="space-y-4 text-xs">
+            {userActionError && (
+              <div className="p-3 bg-red-950/80 border border-red-800 rounded-xl text-red-200 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{userActionError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="text-zinc-300 font-semibold block mb-1.5 uppercase tracking-wider text-[11px]">
+                Nombre Completo *
+              </label>
+              <input
+                type="text"
+                required
+                value={userFormName}
+                onChange={(e) => setUserFormName(e.target.value)}
+                placeholder="Ej. Juan Pérez"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-ted-red text-xs sm:text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="text-zinc-300 font-semibold block mb-1.5 uppercase tracking-wider text-[11px]">
+                Correo Electrónico (Login) *
+              </label>
+              <input
+                type="email"
+                required
+                value={userFormEmail}
+                onChange={(e) => setUserFormEmail(e.target.value)}
+                placeholder="ejemplo@tedx.local o personal"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-ted-red text-xs sm:text-sm font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="text-zinc-300 font-semibold block mb-1.5 uppercase tracking-wider text-[11px]">
+                Rol en la Plataforma *
+              </label>
+              <select
+                value={userFormRole}
+                onChange={(e) => setUserFormRole(e.target.value as UserRole)}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-ted-red text-xs sm:text-sm"
+              >
+                <option value="ADMIN">👑 Administrador (Acceso Total y Configuración)</option>
+                <option value="VALIDATOR">💳 Validador (Cola Bancaria y Comprobantes)</option>
+                <option value="VOLUNTEER">🤝 Voluntario (Mesa de Registro, Efectivo y WhatsApp)</option>
+                <option value="CHECKIN">🎟️ Escáner Puerta (Check-in con QR y Aforo)</option>
+                <option value="STAFF">🛡️ Staff General (Apoyo Logístico)</option>
+              </select>
+              <p className="text-[11px] text-zinc-500 mt-1.5">
+                {getUserRoleBadge(userFormRole).desc}
+              </p>
+            </div>
+
+            <div>
+              <label className="text-zinc-300 font-semibold block mb-1.5 uppercase tracking-wider text-[11px]">
+                {editingUser ? 'Nueva Contraseña (Opcional)' : 'Contraseña de Acceso *'}
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required={!editingUser}
+                  value={userFormPassword}
+                  onChange={(e) => setUserFormPassword(e.target.value)}
+                  placeholder={editingUser ? 'Dejar vacío para conservar la actual' : 'Mínimo 6 caracteres'}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-3.5 pr-10 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-ted-red text-xs sm:text-sm font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[10px] text-zinc-500 mt-1">
+                {editingUser
+                  ? 'Si no deseas cambiar la clave del usuario, deja este campo en blanco.'
+                  : 'El usuario usará este correo y clave para ingresar al sistema.'}
+              </p>
+            </div>
+
+            <div className="pt-4 border-t border-zinc-800 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setUserModalOpen(false)}
+                disabled={userActionLoading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="bg-ted-red hover:bg-red-700 text-white font-bold"
+                disabled={userActionLoading}
+              >
+                {userActionLoading
+                  ? 'Guardando...'
+                  : editingUser
+                  ? 'Actualizar Usuario'
+                  : 'Crear Usuario'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {/* MODAL: Crear / Editar Categoría de Entrada */}

@@ -4,6 +4,7 @@ import {
   OrderData,
   CreateOrderPayload,
   UserData,
+  AdminUserData,
   DashboardStats,
   CheckInResult,
   TicketData,
@@ -636,6 +637,57 @@ export const api = {
   async clearWhatsAppQueue(): Promise<{ message: string; stats: WhatsAppQueueStats }> {
     const res = await fetch(`${API_BASE}/admin/whatsapp/queue-clear`, {
       method: 'POST',
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // GESTIÓN DE USUARIOS Y ROLES (ADMIN)
+  // ==========================================
+
+  async getAdminUsers(): Promise<{ users: AdminUserData[] }> {
+    const res = await fetch(`${API_BASE}/admin/users`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async createAdminUser(data: {
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+  }): Promise<{ message: string; user: AdminUserData }> {
+    const res = await fetch(`${API_BASE}/admin/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async updateAdminUser(
+    id: string,
+    data: { name?: string; email?: string; password?: string; role?: string }
+  ): Promise<{ message: string; user: AdminUserData }> {
+    const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async deleteAdminUser(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+      method: 'DELETE',
       headers: getAuthHeader(),
     });
     return handleResponse(res);

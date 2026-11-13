@@ -231,6 +231,20 @@ export interface UserData {
   role: UserRole;
 }
 
+export interface AdminUserData {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt?: string;
+  _count?: {
+    ordersReviewed: number;
+    ticketsChecked: number;
+    ordersCollected: number;
+  };
+}
+
 export interface DashboardStats {
   totalOrders: number;
   pendingApprovals: number;
