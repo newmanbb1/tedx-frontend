@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, Mail, Shield, AlertCircle, ArrowLeft, Info } from 'lucide-react';
 import { Button } from '../components/ui/Button.js';
-import { UserData, UserRole } from '../types/index.js';
+import { UserData } from '../types/index.js';
 import { useAuth } from '../context/AuthContext.js';
 
 interface LoginPageProps {
@@ -33,22 +33,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       setErrorMsg(err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const setCredentials = (role: UserRole | 'VALIDATOR' | 'VOLUNTEER' | 'ADMIN' | 'STAFF') => {
-    if (role === 'ADMIN') {
-      setEmail('admin@tedx.local');
-      setPassword('AdminTedx2026!');
-    } else if (role === 'VALIDATOR') {
-      setEmail('validador1@tedx.local');
-      setPassword('ValidatorTedx2026!');
-    } else if (role === 'VOLUNTEER') {
-      setEmail('voluntario1@tedx.local');
-      setPassword('VoluntarioTedx2026!');
-    } else {
-      setEmail('checkin@tedx.local');
-      setPassword('CheckinTedx2026!');
     }
   };
 
@@ -126,42 +110,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             Ingresar
           </Button>
         </form>
-
-        <div className="pt-4 border-t border-zinc-800 space-y-2">
-          <p className="text-[11px] text-zinc-400 text-center uppercase tracking-wider">
-            Credenciales de Prueba (Desarrollo):
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setCredentials('ADMIN')}
-              className="py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 font-medium border border-zinc-700 transition-colors"
-            >
-              Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => setCredentials('VALIDATOR')}
-              className="py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-amber-300 font-medium border border-zinc-700 transition-colors"
-            >
-              Validador 1
-            </button>
-            <button
-              type="button"
-              onClick={() => setCredentials('VOLUNTEER')}
-              className="py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-emerald-300 font-medium border border-zinc-700 transition-colors"
-            >
-              Voluntario 1
-            </button>
-            <button
-              type="button"
-              onClick={() => setCredentials('STAFF')}
-              className="py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-blue-300 font-medium border border-zinc-700 transition-colors"
-            >
-              Staff Puerta
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
