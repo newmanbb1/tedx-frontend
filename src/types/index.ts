@@ -289,3 +289,73 @@ export interface VolunteerCashSummary {
   todayCashTotalAmount: number;
   orders: OrderData[];
 }
+
+export type WhatsAppConnectionState = 'open' | 'connecting' | 'close' | 'refused';
+
+export interface WhatsAppInstanceStatus {
+  state: WhatsAppConnectionState;
+  instanceName: string;
+  serverUrl: string;
+  number?: string | null;
+  profileName?: string | null;
+  profilePicUrl?: string | null;
+  ownerJid?: string | null;
+  totalTicketsDispatched: number;
+  totalOrdersDispatched: number;
+}
+
+export interface WhatsAppQRResponse {
+  base64?: string;
+  code?: string;
+  pairingCode?: string;
+  count?: number;
+  state?: string;
+}
+
+export interface WhatsAppTestResult {
+  success: boolean;
+  message: string;
+  formattedPhone: string;
+  apiResponse?: any;
+}
+
+export interface WhatsAppQueueConfig {
+  minDelaySeconds: number;
+  maxDelaySeconds: number;
+  simulateTyping: boolean;
+  typingDurationSeconds: number;
+  maxDailyThreshold: number;
+  isPaused: boolean;
+}
+
+export interface WhatsAppQueueItem {
+  id: string;
+  phone: string;
+  attendeeName: string;
+  ticketCode: string;
+  orderNumber: string;
+  addedAt: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  error?: string;
+  waMeUrl?: string;
+  processedAt?: string;
+}
+
+export interface WhatsAppQueueStats {
+  queueLength: number;
+  pendingCount: number;
+  isProcessing: boolean;
+  processingItem: WhatsAppQueueItem | null;
+  completedCount: number;
+  failedCount: number;
+  sentTodayCount: number;
+  estimatedRemainingSeconds: number;
+  config: WhatsAppQueueConfig;
+  recentItems: WhatsAppQueueItem[];
+}
+
+export interface WhatsAppPairingCodeResponse {
+  pairingCode: string;
+  code?: string;
+  state?: string;
+}

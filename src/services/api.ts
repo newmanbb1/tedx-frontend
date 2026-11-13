@@ -19,6 +19,12 @@ import {
   CertificateVerifyResult,
   TicketTypeData,
   UpdateAttendeeItem,
+  WhatsAppInstanceStatus,
+  WhatsAppQRResponse,
+  WhatsAppTestResult,
+  WhatsAppQueueStats,
+  WhatsAppQueueConfig,
+  WhatsAppPairingCodeResponse,
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -498,6 +504,93 @@ export const api = {
 
   async getAllCertificates(): Promise<{ certificates: CertificateData[] }> {
     const res = await fetch(`${API_BASE}/certificates`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // Módulo de Administración de WhatsApp (Evolution API)
+  // ==========================================
+
+  async getWhatsAppStatus(): Promise<WhatsAppInstanceStatus> {
+    const res = await fetch(`${API_BASE}/admin/whatsapp/status`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async getWhatsAppQR(): Promise<WhatsAppQRResponse> {
+    const res = await fetch(`${API_BASE}/admin/whatsapp/qr`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async restartWhatsAppInstance(): Promise<{ message: string; data?: any }> {
+    const res = await fetch(`${API_BASE}/admin/whatsapp/restart`, {
+      method: 'POST',
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async logoutWhatsAppInstance(): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/admin/whatsapp/logout`, {
+      method: 'POST',
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async sendWhatsAppTest(phone: string, message?: string): Promise<WhatsAppTestResult> {
+    const res = await fetch(`${API_BASE}/admin/whatsapp/send-test`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify({ phone, message }),
+    });
+    return handleResponse(res);
+  },
+
+  async getWhatsAppPairingCode(phone: string): Promise<WhatsAppPairingCodeResponse> {
+    const res = await fetch(`${API_BASE}/admin/whatsapp/pairing-code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify({ phone }),
+    });
+    return handleResponse(res);
+  },
+
+  async getWhatsAppQueueStats(): Promise<WhatsAppQueueStats> {
+    const res = await fetch(`${API_BASE}/admin/whatsapp/queue-stats`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async updateWhatsAppQueueConfig(
+    config: Partial<WhatsAppQueueConfig>
+  ): Promise<{ message: string; config: WhatsAppQueueConfig }> {
+    const res = await fetch(`${API_BASE}/admin/whatsapp/queue-config`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify(config),
+    });
+    return handleResponse(res);
+  },
+
+  async clearWhatsAppQueue(): Promise<{ message: string; stats: WhatsAppQueueStats }> {
+    const res = await fetch(`${API_BASE}/admin/whatsapp/queue-clear`, {
+      method: 'POST',
       headers: getAuthHeader(),
     });
     return handleResponse(res);

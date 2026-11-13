@@ -18,6 +18,18 @@ import {
   QrCode,
   Image,
   MessageCircle,
+  RefreshCw,
+  Power,
+  Send,
+  Smartphone,
+  Check,
+  AlertTriangle,
+  ShieldCheck,
+  KeyRound,
+  Copy,
+  Pause,
+  Play,
+  Sliders,
 } from 'lucide-react';
 import {
   DashboardStats,
@@ -28,6 +40,11 @@ import {
   TicketTypeData,
   PaymentSettingData,
   BackgroundImageData,
+  WhatsAppInstanceStatus,
+  WhatsAppQRResponse,
+  WhatsAppTestResult,
+  WhatsAppQueueStats,
+  WhatsAppPairingCodeResponse,
 } from '../types/index.js';
 import { api } from '../services/api.js';
 import { Badge } from '../components/ui/Badge.js';
@@ -35,7 +52,30 @@ import { Button } from '../components/ui/Button.js';
 import { Modal } from '../components/ui/Modal.js';
 
 export const AdminDashboardPage: React.FC = () => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'speakers' | 'certificates' | 'tickets' | 'payment' | 'backgrounds'>('orders');
+  const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'speakers' | 'certificates' | 'tickets' | 'payment' | 'backgrounds' | 'whatsapp'>('orders');
+
+  // Pestaña WhatsApp (Evolution API)
+  const [waStatus, setWaStatus] = useState<WhatsAppInstanceStatus | null>(null);
+  const [waLoading, setWaLoading] = useState(false);
+  const [waQr, setWaQr] = useState<WhatsAppQRResponse | null>(null);
+  const [waQrLoading, setWaQrLoading] = useState(false);
+  const [waActionLoading, setWaActionLoading] = useState(false);
+  const [waMsg, setWaMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [waTestPhone, setWaTestPhone] = useState('');
+  const [waTestText, setWaTestText] = useState('');
+  const [waTestLoading, setWaTestLoading] = useState(false);
+  const [waTestResult, setWaTestResult] = useState<WhatsAppTestResult | null>(null);
+
+  // Estados avanzados: Código de Emparejamiento y Temporizador Anti-Expiración QR
+  const [waPairingMode, setWaPairingMode] = useState<'qr' | 'pairing-code'>('qr');
+  const [waPairingPhone, setWaPairingPhone] = useState('');
+  const [waPairingResponse, setWaPairingResponse] = useState<WhatsAppPairingCodeResponse | null>(null);
+  const [waPairingLoading, setWaPairingLoading] = useState(false);
+  const [qrCountdown, setQrCountdown] = useState<number>(25);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  // Estados de la Cola Anti-Baneo
+  const [waQueueStats, setWaQueueStats] = useState<WhatsAppQueueStats | null>(null);
 
   // Pestaña Órdenes
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -169,6 +209,150 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  const loadWhatsAppQR = async () => {
+    try {
+      setWaQrLoading(true);
+      const qr = await api.getWhatsAppQR();
+      setWaQr(qr);
+      setQrCountdown(25); // Reiniciar temporizador de validez
+    } catch (err: any) {
+      console.warn('Error cargando QR de WhatsApp:', err);
+    } finally {
+      setWaQrLoading(false);
+    }
+  };
+
+  const loadWhatsAppStatus = async (silent = false) => {
+    try {
+      if (!silent) setWaLoading(true);
+      const status = await api.getWhatsAppStatus();
+      setWaStatus(status);
+      if (status.state !== 'open' && !silent) {
+        loadWhatsAppQR();
+      }
+    } catch (err: any) {
+      console.error('Error cargando estado de WhatsApp:', err);
+    } finally {
+      if (!silent) setWaLoading(false);
+    }
+  };
+
+  const loadWhatsAppQueueStats = async () => {
+    try {
+      const qStats = await api.getWhatsAppQueueStats();
+      setWaQueueStats(qStats);
+    } catch (err: any) {
+      console.warn('Error cargando cola de WhatsApp:', err);
+    }
+  };
+
+  const handleGetPairingCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waPairingPhone.trim()) return;
+    setWaPairingLoading(true);
+    setWaMsg(null);
+    try {
+      const res = await api.getWhatsAppPairingCode(waPairingPhone);
+      setWaPairingResponse(res);
+      setWaMsg({ type: 'success', text: 'Código de emparejamiento generado exitosamente.' });
+    } catch (err: any) {
+      setWaMsg({ type: 'error', text: err.message || 'Error al generar código de emparejamiento' });
+    } finally {
+      setWaPairingLoading(false);
+    }
+  };
+
+  const handleToggleQueuePause = async () => {
+    if (!waQueueStats) return;
+    try {
+      const updated = await api.updateWhatsAppQueueConfig({ isPaused: !waQueueStats.config.isPaused });
+      setWaQueueStats((prev) => prev ? { ...prev, config: updated.config } : null);
+      setWaMsg({
+        type: 'success',
+        text: updated.config.isPaused ? 'Cola de envíos pausada.' : 'Cola de envíos reanudada.',
+      });
+    } catch (err: any) {
+      setWaMsg({ type: 'error', text: err.message || 'Error al modificar estado de la cola' });
+    }
+  };
+
+  const handleUpdateQueueDelay = async (minSec: number) => {
+    try {
+      const updated = await api.updateWhatsAppQueueConfig({
+        minDelaySeconds: minSec,
+        maxDelaySeconds: minSec + 6,
+      });
+      setWaQueueStats((prev) => prev ? { ...prev, config: updated.config } : null);
+    } catch (err: any) {
+      console.warn('Error actualizando delay:', err);
+    }
+  };
+
+  const handleClearQueue = async () => {
+    try {
+      const res = await api.clearWhatsAppQueue();
+      setWaQueueStats(res.stats);
+      setWaMsg({ type: 'success', text: 'Cola de mensajes completados limpiada.' });
+    } catch (err: any) {
+      setWaMsg({ type: 'error', text: err.message || 'Error al limpiar cola' });
+    }
+  };
+
+  const handleCopyPairingCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleRestartWhatsApp = async () => {
+    setWaActionLoading(true);
+    setWaMsg(null);
+    try {
+      await api.restartWhatsAppInstance();
+      setWaMsg({ type: 'success', text: 'Instancia de WhatsApp reiniciada exitosamente.' });
+      await loadWhatsAppStatus();
+    } catch (err: any) {
+      setWaMsg({ type: 'error', text: err.message || 'Error al reiniciar la instancia.' });
+    } finally {
+      setWaActionLoading(false);
+    }
+  };
+
+  const handleLogoutWhatsApp = async () => {
+    if (!confirm('¿Estás seguro de que deseas desvincular y cerrar la sesión del número actual de WhatsApp?')) return;
+    setWaActionLoading(true);
+    setWaMsg(null);
+    try {
+      await api.logoutWhatsAppInstance();
+      setWaMsg({ type: 'success', text: 'Dispositivo desvinculado. Escanea el nuevo código QR o genera un código para conectar.' });
+      await loadWhatsAppStatus();
+    } catch (err: any) {
+      setWaMsg({ type: 'error', text: err.message || 'Error al desvincular dispositivo.' });
+    } finally {
+      setWaActionLoading(false);
+    }
+  };
+
+  const handleSendWhatsAppTest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waTestPhone.trim()) return;
+    setWaTestLoading(true);
+    setWaTestResult(null);
+    setWaMsg(null);
+    try {
+      const res = await api.sendWhatsAppTest(waTestPhone, waTestText || undefined);
+      setWaTestResult(res);
+      setWaMsg({ type: 'success', text: res.message });
+      loadWhatsAppQueueStats();
+    } catch (err: any) {
+      setWaTestResult({ success: false, message: err.message || 'Error al enviar mensaje', formattedPhone: waTestPhone });
+      setWaMsg({ type: 'error', text: err.message || 'Error al enviar mensaje de prueba' });
+    } finally {
+      setWaTestLoading(false);
+    }
+  };
+
+  // Carga inicial y sondeo periódico para WhatsApp
   useEffect(() => {
     loadData();
     loadSpeakers();
@@ -176,7 +360,43 @@ export const AdminDashboardPage: React.FC = () => {
     loadTicketTypes();
     loadPaymentSettings();
     loadBackgrounds();
+    loadWhatsAppStatus(true);
+    loadWhatsAppQueueStats();
   }, [statusFilter]);
+
+  // Temporizador anti-expiración de Código QR (cuenta regresiva de 25s que renueva el QR antes de que caduque)
+  useEffect(() => {
+    if (activeAdminTab !== 'whatsapp' || waStatus?.state === 'open' || waPairingMode !== 'qr') {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setQrCountdown((prev) => {
+        if (prev <= 1) {
+          loadWhatsAppQR();
+          return 25;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [activeAdminTab, waStatus?.state, waPairingMode]);
+
+  // Sondeo periódico de estado y cola
+  useEffect(() => {
+    if (activeAdminTab === 'whatsapp') {
+      loadWhatsAppStatus();
+      loadWhatsAppQueueStats();
+
+      const interval = setInterval(() => {
+        loadWhatsAppStatus(true);
+        loadWhatsAppQueueStats();
+      }, waStatus?.state === 'open' ? 10000 : 4000);
+
+      return () => clearInterval(interval);
+    }
+  }, [activeAdminTab, waStatus?.state]);
 
   const handleUploadBackground = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -533,6 +753,27 @@ export const AdminDashboardPage: React.FC = () => {
           >
             <Image className="w-4 h-4" />
             <span>Imágenes de Fondo</span>
+          </button>
+
+          <button
+            onClick={() => setActiveAdminTab('whatsapp')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+              activeAdminTab === 'whatsapp' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <MessageCircle className="w-4 h-4 text-emerald-400" />
+            <span>WhatsApp API (Evolution)</span>
+            {waStatus && (
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  waStatus.state === 'open'
+                    ? 'bg-emerald-400 animate-pulse'
+                    : waStatus.state === 'connecting'
+                    ? 'bg-amber-400 animate-ping'
+                    : 'bg-rose-500'
+                }`}
+              />
+            )}
           </button>
         </div>
       </div>
@@ -1315,6 +1556,614 @@ export const AdminDashboardPage: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PESTAÑA 7: WHATSAPP (EVOLUTION API) */}
+      {activeAdminTab === 'whatsapp' && (
+        <div className="space-y-8">
+          {/* Header con Estado y Acciones Rápidas */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
+            <div className="space-y-1">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 rounded-xl bg-emerald-950/80 border border-emerald-800 text-emerald-400">
+                  <MessageCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-white flex items-center gap-2">
+                    Servicio de WhatsApp (Evolution API)
+                    {waStatus?.state === 'open' ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        Conectado
+                      </span>
+                    ) : waStatus?.state === 'connecting' ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                        Esperando Vinculación
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-950 text-rose-300 border border-rose-800 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-rose-500" />
+                        Desconectado
+                      </span>
+                    )}
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Envío seguro de entradas digitales y credenciales con código QR para TEDx Innova.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-stretch sm:self-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadWhatsAppStatus()}
+                isLoading={waLoading}
+                leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${waLoading ? 'animate-spin' : ''}`} />}
+                className="border-zinc-700 text-zinc-300 text-xs flex-1 sm:flex-initial"
+              >
+                Actualizar
+              </Button>
+
+              {waStatus?.state === 'open' && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleLogoutWhatsApp}
+                  isLoading={waActionLoading}
+                  leftIcon={<Power className="w-3.5 h-3.5" />}
+                  className="text-xs flex-1 sm:flex-initial"
+                >
+                  Desvincular
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Banner de Protección Anti-Baneo */}
+          <div className="bg-gradient-to-r from-emerald-950/40 via-zinc-900 to-zinc-900 border border-emerald-800/60 p-5 rounded-2xl space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-950 border border-emerald-700 text-emerald-400">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    Motor de Protección Anti-Baneo Activo
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-800 uppercase">
+                      Simulación Humana
+                    </span>
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Los envíos se procesan secuencialmente con pausas aleatorias ({waQueueStats?.config.minDelaySeconds || 8}s a {waQueueStats?.config.maxDelaySeconds || 15}s), variación dinámica de texto y simulación de presencia "Escribiendo...".
+                  </p>
+                </div>
+              </div>
+
+              {/* Controles de la Cola Anti-Baneo */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleToggleQueuePause}
+                  leftIcon={waQueueStats?.config.isPaused ? <Play className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5 text-amber-400" />}
+                  className="border-zinc-700 text-zinc-300 text-xs"
+                >
+                  {waQueueStats?.config.isPaused ? 'Reanudar Cola' : 'Pausar Cola'}
+                </Button>
+
+                {waQueueStats && (waQueueStats.completedCount > 0 || waQueueStats.failedCount > 0) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearQueue}
+                    className="border-zinc-700 text-zinc-400 hover:text-white text-xs"
+                  >
+                    Limpiar Historial
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Métricas de Cola en Vivo */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-zinc-800/80 text-xs font-mono">
+              <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
+                <span className="text-zinc-500 block text-[10px] uppercase">En Cola Pendientes:</span>
+                <span className={`text-base font-bold ${waQueueStats?.pendingCount ? 'text-amber-400 animate-pulse' : 'text-zinc-300'}`}>
+                  {waQueueStats?.pendingCount ?? 0} mensajes
+                </span>
+              </div>
+              <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
+                <span className="text-zinc-500 block text-[10px] uppercase">Enviados Hoy (Seguro):</span>
+                <span className="text-base font-bold text-emerald-400">
+                  {waQueueStats?.sentTodayCount ?? 0} / {waQueueStats?.config.maxDailyThreshold ?? 250}
+                </span>
+              </div>
+              <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
+                <span className="text-zinc-500 block text-[10px] uppercase">Intervalo de Seguridad:</span>
+                <span className="text-sm font-bold text-white">
+                  {waQueueStats?.config.minDelaySeconds ?? 8}s - {waQueueStats?.config.maxDelaySeconds ?? 15}s (Jitter)
+                </span>
+              </div>
+              <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
+                <span className="text-zinc-500 block text-[10px] uppercase">Presencia Simulada:</span>
+                <span className="text-sm font-bold text-emerald-400 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Escribiendo... ({waQueueStats?.config.typingDurationSeconds ?? 3}s)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Mensaje de feedback global */}
+          {waMsg && (
+            <div
+              className={`p-4 rounded-xl text-xs flex items-center justify-between border ${
+                waMsg.type === 'success'
+                  ? 'bg-emerald-950/60 border-emerald-800 text-emerald-200'
+                  : 'bg-rose-950/60 border-rose-800 text-rose-200'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {waMsg.type === 'success' ? (
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                )}
+                <span>{waMsg.text}</span>
+              </div>
+              <button onClick={() => setWaMsg(null)} className="text-zinc-400 hover:text-white ml-2">
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Tarjetas de Métricas Resumen */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">
+              <span className="text-xs text-zinc-400 block font-medium">Estado del Canal</span>
+              <div className="flex items-center gap-2 mt-2">
+                <span
+                  className={`w-3 h-3 rounded-full ${
+                    waStatus?.state === 'open'
+                      ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50'
+                      : waStatus?.state === 'connecting'
+                      ? 'bg-amber-400 animate-pulse'
+                      : 'bg-rose-500'
+                  }`}
+                />
+                <span className="text-lg font-bold text-white capitalize">
+                  {waStatus?.state === 'open'
+                    ? 'Operativo'
+                    : waStatus?.state === 'connecting'
+                    ? 'Enlace Pendiente'
+                    : 'Desconectado'}
+                </span>
+              </div>
+              <span className="text-[11px] text-zinc-500 font-mono mt-1 block">
+                Instancia: {waStatus?.instanceName || 'senordelastintas'}
+              </span>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">
+              <span className="text-xs text-zinc-400 block font-medium">Teléfono Emisor</span>
+              <p className="text-lg font-bold text-white mt-2 font-mono truncate">
+                {waStatus?.number ? `+${waStatus.number}` : 'No vinculado'}
+              </p>
+              <span className="text-[11px] text-zinc-500 truncate block mt-1">
+                {waStatus?.profileName || 'Sin perfil activo'}
+              </span>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">
+              <span className="text-xs text-zinc-400 block font-medium">Boletos Despachados</span>
+              <p className="text-2xl font-black text-emerald-400 mt-2 font-mono">
+                {waStatus?.totalTicketsDispatched ?? 0}
+              </p>
+              <span className="text-[11px] text-zinc-500 block mt-1">
+                En {waStatus?.totalOrdersDispatched ?? 0} órdenes validadas
+              </span>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">
+              <span className="text-xs text-zinc-400 block font-medium">Servidor Evolution</span>
+              <p className="text-sm font-bold text-zinc-300 mt-2 font-mono truncate">
+                {waStatus?.serverUrl || 'http://localhost:8080'}
+              </p>
+              <span className="text-[11px] text-emerald-500 font-semibold block mt-1">
+                Motor Baileys v2.3
+              </span>
+            </div>
+          </div>
+
+          {/* Grilla Principal de Vinculación y Probador */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Columna Izquierda: QR / Pairing Code / Estado Conectado (7 cols) */}
+            <div className="lg:col-span-7 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-6">
+              {waStatus?.state === 'open' ? (
+                /* Estado Ya Conectado */
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-950 border border-emerald-800 flex items-center justify-center text-emerald-400">
+                      <Smartphone className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">Dispositivo WhatsApp Vinculado</h3>
+                      <p className="text-xs text-zinc-400">El canal está activo para emitir credenciales digitales y códigos QR.</p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800/80 flex flex-col sm:flex-row items-center gap-6">
+                    {waStatus.profilePicUrl ? (
+                      <img
+                        src={waStatus.profilePicUrl}
+                        alt="WhatsApp Profile"
+                        className="w-20 h-20 rounded-full border-2 border-emerald-500 object-cover shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-emerald-950 border-2 border-emerald-600 flex items-center justify-center text-emerald-400 text-2xl font-black">
+                        WA
+                      </div>
+                    )}
+
+                    <div className="space-y-1.5 text-center sm:text-left flex-1">
+                      <div className="flex items-center justify-center sm:justify-start gap-2">
+                        <span className="text-lg font-black text-white font-mono">
+                          {waStatus.number ? `+${waStatus.number}` : 'Línea Conectada'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                          ACTIVO
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-300 font-medium">
+                        Nombre: <span className="text-white font-semibold">{waStatus.profileName || 'Línea Oficial TEDx'}</span>
+                      </p>
+                      <p className="text-[11px] text-zinc-500 font-mono">
+                        JID: {waStatus.ownerJid || 'No reportado'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Configuración de ritmo de envío anti-bloqueo */}
+                  <div className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-3 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-zinc-200 flex items-center gap-2">
+                        <Sliders className="w-4 h-4 text-emerald-400" />
+                        Pausas Humanizadas Anti-Bloqueo
+                      </span>
+                      <span className="text-emerald-400 font-mono font-bold">
+                        {waQueueStats?.config.minDelaySeconds || 8}s - {(waQueueStats?.config.minDelaySeconds || 8) + 6}s
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] text-zinc-500">Más Rápido (5s)</span>
+                      <input
+                        type="range"
+                        min="5"
+                        max="25"
+                        step="1"
+                        value={waQueueStats?.config.minDelaySeconds || 8}
+                        onChange={(e) => handleUpdateQueueDelay(Number(e.target.value))}
+                        className="flex-1 accent-emerald-500 cursor-pointer"
+                      />
+                      <span className="text-[11px] text-zinc-500">Más Seguro (25s)</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">
+                      Recomendado: 8 a 15 segundos para números no verificados por Meta Business.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRestartWhatsApp}
+                      isLoading={waActionLoading}
+                      leftIcon={<RefreshCw className="w-4 h-4" />}
+                      className="border-zinc-700 text-zinc-300"
+                    >
+                      Reiniciar Conexión
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={handleLogoutWhatsApp}
+                      isLoading={waActionLoading}
+                      leftIcon={<Power className="w-4 h-4" />}
+                    >
+                      Desvincular Dispositivo
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                /* Estado Pendiente / Métodos de Vinculación */
+                <div className="space-y-6">
+                  {/* Selector de Método de Emparejamiento */}
+                  <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                    <div>
+                      <h3 className="text-base font-bold text-white">Vincular Número de WhatsApp</h3>
+                      <p className="text-xs text-zinc-400">Elige el método de emparejamiento que prefieras.</p>
+                    </div>
+
+                    <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs">
+                      <button
+                        onClick={() => setWaPairingMode('qr')}
+                        className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+                          waPairingMode === 'qr' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        Código QR
+                      </button>
+                      <button
+                        onClick={() => setWaPairingMode('pairing-code')}
+                        className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+                          waPairingMode === 'pairing-code' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        <KeyRound className="w-3.5 h-3.5" />
+                        Código 8 Dígitos
+                      </button>
+                    </div>
+                  </div>
+
+                  {waPairingMode === 'qr' ? (
+                    /* Método 1: Código QR con Contador Regresivo Anti-Expiración */
+                    <div className="space-y-4">
+                      {/* Barra de progreso de auto-renovación */}
+                      <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-800/80 space-y-2 text-xs">
+                        <div className="flex items-center justify-between text-[11px] font-mono">
+                          <span className="text-zinc-400 flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                            Validez del QR: <strong className="text-white">{qrCountdown}s</strong>
+                          </span>
+                          <span className="text-emerald-400">Auto-renovación automática activa</span>
+                        </div>
+                        <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="bg-emerald-500 h-1.5 rounded-full transition-all duration-1000"
+                            style={{ width: `${(qrCountdown / 25) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-center gap-6 justify-center bg-zinc-950 p-6 rounded-2xl border border-zinc-800/80">
+                        {/* Contenedor del Código QR */}
+                        <div className="relative p-3 bg-white rounded-2xl shadow-2xl shrink-0 flex items-center justify-center min-w-[220px] min-h-[220px]">
+                          {waQrLoading ? (
+                            <div className="flex flex-col items-center justify-center text-zinc-800 space-y-2">
+                              <div className="w-8 h-8 border-3 border-ted-red border-t-transparent rounded-full animate-spin" />
+                              <span className="text-[11px] font-mono font-bold">Generando QR fresco...</span>
+                            </div>
+                          ) : waQr?.base64 ? (
+                            <img
+                              src={waQr.base64}
+                              alt="Código QR de WhatsApp Evolution API"
+                              className="w-52 h-52 object-contain rounded-lg"
+                            />
+                          ) : (
+                            <div className="text-center p-4 text-zinc-700 space-y-2">
+                              <AlertTriangle className="w-8 h-8 mx-auto text-amber-500" />
+                              <p className="text-xs font-bold">QR no disponible aún</p>
+                              <Button size="sm" variant="primary" onClick={loadWhatsAppQR}>
+                                Obtener QR
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Instrucciones de Escaneo */}
+                        <div className="space-y-3 text-xs text-zinc-300 flex-1">
+                          <p className="font-bold text-white text-sm">Pasos para conectar:</p>
+                          <ol className="space-y-2.5 list-decimal pl-4 leading-relaxed text-zinc-400">
+                            <li>
+                              Abre <strong className="text-white">WhatsApp</strong> en tu teléfono móvil.
+                            </li>
+                            <li>
+                              Toca <strong className="text-white">Menú</strong> o <strong className="text-white">Configuración</strong> y selecciona <strong className="text-emerald-400 font-semibold">Dispositivos vinculados</strong>.
+                            </li>
+                            <li>
+                              Toca <strong className="text-white">Vincular un dispositivo</strong>.
+                            </li>
+                            <li>
+                              Apunta tu teléfono hacia este código QR.
+                            </li>
+                          </ol>
+
+                          <div className="pt-2 flex items-center justify-between">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={loadWhatsAppQR}
+                              isLoading={waQrLoading}
+                              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+                              className="border-zinc-700 text-zinc-300 text-xs"
+                            >
+                              Regenerar Ahora
+                            </Button>
+                            <span className="text-[11px] text-zinc-500">
+                              Reintentos: {waQr?.count ?? 1}/8
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Método 2: Código de Emparejamiento por Número (No expira en 20s) */
+                    <div className="space-y-6">
+                      <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800/80 space-y-4">
+                        <div>
+                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            <KeyRound className="w-4 h-4 text-amber-400" />
+                            Emparejar por Código de Teléfono (Alternativa sin QR)
+                          </h4>
+                          <p className="text-xs text-zinc-400 mt-1">
+                            Este método genera un código de 8 caracteres que se introduce directamente en WhatsApp sin usar la cámara, evitando problemas de expiración o enfoque.
+                          </p>
+                        </div>
+
+                        <form onSubmit={handleGetPairingCode} className="flex gap-2">
+                          <div className="relative flex-1">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-mono font-bold text-xs">
+                              +591
+                            </span>
+                            <input
+                              type="text"
+                              required
+                              value={waPairingPhone}
+                              onChange={(e) => setWaPairingPhone(e.target.value)}
+                              placeholder="7XXXXXXX"
+                              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-16 pr-4 py-2.5 text-white font-mono text-sm focus:outline-none focus:border-ted-red"
+                            />
+                          </div>
+
+                          <Button
+                            type="submit"
+                            size="md"
+                            variant="primary"
+                            isLoading={waPairingLoading}
+                            leftIcon={<KeyRound className="w-4 h-4" />}
+                          >
+                            Generar Código
+                          </Button>
+                        </form>
+
+                        {/* Despliegue del Código de 8 Dígitos */}
+                        {waPairingResponse?.pairingCode && (
+                          <div className="p-6 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-950 border border-emerald-700 text-center space-y-4 shadow-xl">
+                            <span className="text-xs text-emerald-400 font-bold uppercase tracking-wider block">
+                              Tu Código de Vinculación de WhatsApp:
+                            </span>
+
+                            <div className="flex items-center justify-center gap-3">
+                              <span className="text-3xl sm:text-4xl font-black font-mono tracking-widest text-white bg-zinc-950 px-6 py-3 rounded-2xl border border-zinc-700 shadow-inner">
+                                {waPairingResponse.pairingCode}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCopyPairingCode(waPairingResponse.pairingCode)}
+                                leftIcon={copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                                className="border-zinc-700"
+                              >
+                                {copiedCode ? 'Copiado' : 'Copiar'}
+                              </Button>
+                            </div>
+
+                            <div className="text-left text-xs text-zinc-300 bg-zinc-950/80 p-4 rounded-xl border border-zinc-800 space-y-1.5">
+                              <p className="font-bold text-white">Instrucciones en tu celular:</p>
+                              <ol className="list-decimal pl-4 space-y-1 text-zinc-400">
+                                <li>Abre WhatsApp &gt; Dispositivos vinculados.</li>
+                                <li>Toca <strong>"Vincular un dispositivo"</strong>.</li>
+                                <li>Toca abajo en <strong>"Vincular con el número de teléfono"</strong>.</li>
+                                <li>Escribe este código de 8 dígitos para finalizar.</li>
+                              </ol>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Columna Derecha: Probador de Envíos en Vivo (5 cols) */}
+            <div className="lg:col-span-5 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-6">
+              <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+                <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-ted-red">
+                  <Send className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Probador de Mensajes en Vivo</h3>
+                  <p className="text-xs text-zinc-400">Verifica la entrega inmediata de mensajes a un teléfono de prueba.</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSendWhatsAppTest} className="space-y-4 text-xs">
+                <div>
+                  <label className="text-zinc-300 font-semibold block mb-1.5 uppercase tracking-wider text-[11px]">
+                    Número de Celular Destino *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-mono font-bold text-xs">
+                      +591
+                    </span>
+                    <input
+                      type="text"
+                      required
+                      value={waTestPhone}
+                      onChange={(e) => setWaTestPhone(e.target.value)}
+                      placeholder="7XXXXXXX"
+                      className="w-full bg-zinc-950 border border-zinc-700 rounded-xl pl-16 pr-4 py-2.5 text-white font-mono text-sm focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <span className="text-[10px] text-zinc-500 mt-1 block">
+                    Formato estándar Bolivia (8 dígitos). Se añadirá automáticamente el prefijo de país.
+                  </span>
+                </div>
+
+                <div>
+                  <label className="text-zinc-300 font-semibold block mb-1.5 uppercase tracking-wider text-[11px]">
+                    Mensaje Personalizado (Opcional)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={waTestText}
+                    onChange={(e) => setWaTestText(e.target.value)}
+                    placeholder="Escribe un mensaje de prueba o deja vacío para usar la plantilla oficial..."
+                    className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-white text-xs focus:outline-none focus:border-emerald-500 resize-none font-mono"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  size="md"
+                  variant="primary"
+                  isLoading={waTestLoading}
+                  leftIcon={<Send className="w-4 h-4" />}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-950/40"
+                >
+                  Enviar Mensaje de Prueba
+                </Button>
+              </form>
+
+              {/* Resultado del Envío de Prueba */}
+              {waTestResult && (
+                <div
+                  className={`p-4 rounded-xl border text-xs space-y-2 ${
+                    waTestResult.success
+                      ? 'bg-emerald-950/50 border-emerald-800 text-emerald-200'
+                      : 'bg-rose-950/50 border-rose-800 text-rose-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold">
+                    {waTestResult.success ? (
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                    )}
+                    <span>{waTestResult.success ? '¡Mensaje Entregado!' : 'Error en la Entrega'}</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed opacity-90">{waTestResult.message}</p>
+                  <div className="pt-2 flex items-center justify-between border-t border-white/10 text-[10px] font-mono">
+                    <span>Destino: +{waTestResult.formattedPhone}</span>
+                    <a
+                      href={`https://wa.me/${waTestResult.formattedPhone}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                    >
+                      Abrir en WA <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
