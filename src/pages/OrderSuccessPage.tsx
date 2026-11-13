@@ -452,8 +452,11 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
               {order.tickets?.map((t, idx) => (
                 <div
                   key={t.id}
-                  className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-6 flex flex-col justify-between space-y-6 hover:border-ted-red/40 transition-colors shadow-xl"
+                  className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-6 flex flex-col justify-between space-y-6 hover:border-ted-red/40 transition-colors shadow-xl overflow-hidden relative"
                 >
+                  {/* Cinta Lanyard Superior en la Credencial */}
+                  <div className="w-[calc(100%+3rem)] h-3 pattern-lanyard-ribbon -mt-6 -mx-6 mb-2 border-b border-ted-red/30 shadow-sm" />
+
                   <div>
                     <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
                       <span className="text-xs font-bold text-ted-red tracking-wider uppercase flex items-center gap-1.5">

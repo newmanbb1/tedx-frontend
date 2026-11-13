@@ -1059,6 +1059,9 @@ export const AdminDashboardPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {/* Cinta Lanyard Superior en Panel */}
+      <div className="w-full h-3 pattern-lanyard-ribbon rounded-full border border-ted-red/30 shadow-sm" />
+
       {/* Header del Panel */}
       <div className="border-b border-zinc-800 pb-5">
         <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ted-red uppercase tracking-widest mb-1.5">

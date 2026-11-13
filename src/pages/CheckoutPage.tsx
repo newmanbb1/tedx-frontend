@@ -264,6 +264,9 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Cinta Lanyard Superior en Checkout */}
+      <div className="w-full h-3 pattern-lanyard-ribbon rounded-full border border-ted-red/30 shadow-sm mb-6" />
+
       {/* Top Back Navigation (Responsive Mobile-First) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
         <button

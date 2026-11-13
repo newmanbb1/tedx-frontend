@@ -230,6 +230,9 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      {/* Cinta Lanyard Superior */}
+      <div className="w-full h-3 pattern-lanyard-ribbon rounded-full border border-ted-red/30 shadow-sm" />
+
       {/* Header */}
       <div className="border-b border-zinc-800 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

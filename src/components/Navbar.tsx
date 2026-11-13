@@ -44,6 +44,9 @@ export const Navbar: React.FC<NavbarProps> = ({
     <nav className={`sticky top-0 z-50 w-full border-b border-zinc-800/80 transition-colors ${
       mobileMenuOpen ? 'bg-zinc-950' : 'bg-ted-black/90 backdrop-blur-md'
     }`}>
+      {/* Cinta Lanyard Superior Oficial (Patrón Colonial y Jalq'a Fusionado) */}
+      <div className="w-full h-3 sm:h-3.5 pattern-lanyard-ribbon border-b border-ted-red/30 shadow-sm" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <div

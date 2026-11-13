@@ -39,3 +39,28 @@
   scrollbar-width: none;
 }
 
+/* Patrones de Identidad Cultural TEDx USFX (Colonial y Jalq'a Fusionado + Lanyard) */
+.pattern-lanyard-ribbon {
+  background-image: url('/patron-lanyard-tile.png');
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+}
+
+.pattern-lanyard-transparent {
+  background-image: url('/patron-lanyard-transparent.png');
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+}
+
+.pattern-jalka-ribbon {
+  background-image: url('/patron-colonial-jalka-tile.png');
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+}
+
+.pattern-jalka-transparent {
+  background-image: url('/patron-colonial-jalka-transparent.png');
+  background-repeat: repeat;
+  background-size: 250px auto;
+}
+

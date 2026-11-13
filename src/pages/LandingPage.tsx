@@ -267,6 +267,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
         </div>
       </section>
 
+      {/* Franja de Identidad Cultural TEDx USFX: Pasado y Cultura */}
+      <section className="relative w-full overflow-hidden bg-gradient-to-r from-zinc-950 via-zinc-900/95 to-zinc-950 border-y border-zinc-800/80 shadow-2xl">
+        {/* Marca de agua de fondo con patrón Jalq'a y Colonial */}
+        <div className="absolute inset-0 pattern-jalka-transparent opacity-10 pointer-events-none" />
+
+        {/* Cinta Lanyard Superior en la franja */}
+        <div className="w-full h-3 sm:h-3.5 pattern-lanyard-ribbon border-b border-ted-red/30" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-1.5 text-center md:text-left">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ted-red uppercase tracking-widest">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Identidad Visual TEDx USFX 2026</span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
+              Patrón Colonial y Jalq'a Fusionado: Pasado y Cultura
+            </h3>
+            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl font-light leading-relaxed">
+              La herencia arquitectónica barroca de la Ciudad Blanca de Sucre entrelazada con el arte textil milenario de los Jalq'a de Chuquisaca para proyectar ideas al futuro.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-ted-red/30 shadow-2xl shrink-0 bg-black">
+            <img
+              src="/patron-colonial-jalka.png"
+              alt="Patrón Colonial y Jalq'a Fusionado"
+              className="h-14 sm:h-20 w-auto object-cover"
+            />
+          </div>
+        </div>
+
+        {/* Cinta Lanyard Inferior en la franja */}
+        <div className="w-full h-2.5 pattern-lanyard-ribbon border-t border-ted-red/20 opacity-80" />
+      </section>
+
       {/* Sección de Oradores Oficiales (Diseño Afiches de Alto Impacto) */}
       <section id="speakers" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
         <div className="text-center space-y-4 mb-12 sm:mb-16">
@@ -371,6 +406,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
                 <div
                   className={`absolute -top-24 -right-24 w-48 h-48 ${tier.glowColor} rounded-full blur-3xl pointer-events-none`}
                 />
+
+                {/* Cinta Lanyard Superior en la Tarjeta */}
+                <div className="w-[calc(100%+3rem)] sm:w-[calc(100%+4rem)] h-3.5 pattern-lanyard-ribbon -mt-6 sm:-mt-8 -mx-6 sm:-mx-8 mb-5 border-b border-ted-red/30 shadow-sm" />
 
                 <div>
                   {/* Badge de Categoría y TEDx Pass */}
