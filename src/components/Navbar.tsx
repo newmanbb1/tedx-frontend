@@ -58,9 +58,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 USFX
               </span>
             </div>
-            <span className="hidden md:inline-block ml-3 px-2 py-0.5 text-[11px] font-semibold text-zinc-400 bg-zinc-800/80 rounded border border-zinc-700/60 uppercase tracking-widest">
-              2026
-            </span>
           </div>
 
           <div className="hidden md:flex items-center space-x-6">
