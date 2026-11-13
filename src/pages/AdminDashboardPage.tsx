@@ -34,6 +34,7 @@ import {
   EyeOff,
   Shield,
   ChevronDown,
+  X,
 } from 'lucide-react';
 import {
   DashboardStats,
@@ -1086,14 +1087,14 @@ export const AdminDashboardPage: React.FC = () => {
             onChange={(e) => setActiveAdminTab(e.target.value as any)}
             className="w-full bg-zinc-900 border-2 border-ted-red text-white font-bold text-sm rounded-2xl px-4 py-3.5 appearance-none focus:outline-none focus:ring-2 focus:ring-ted-red/40 shadow-xl cursor-pointer"
           >
-            <option value="orders">💵 1. Órdenes y Validaciones</option>
-            <option value="speakers">👥 2. Speakers Oficiales</option>
-            <option value="certificates">🎓 3. Plantillas de Certificados</option>
-            <option value="tickets">🎟️ 4. Entradas y Precios (Bs)</option>
-            <option value="payment">📱 5. Configuración Pago QR (Subir QR)</option>
-            <option value="backgrounds">🖼️ 6. Imágenes de Fondo</option>
-            <option value="whatsapp">💬 7. WhatsApp API (Evolution)</option>
-            <option value="users">👤 8. Gestión de Usuarios (Crear Usuarios)</option>
+            <option value="orders">1. Órdenes y Validaciones</option>
+            <option value="speakers">2. Speakers Oficiales</option>
+            <option value="certificates">3. Plantillas de Certificados</option>
+            <option value="tickets">4. Entradas y Precios (Bs)</option>
+            <option value="payment">5. Configuración Pago QR (Subir QR)</option>
+            <option value="backgrounds">6. Imágenes de Fondo</option>
+            <option value="whatsapp">7. WhatsApp API (Evolution)</option>
+            <option value="users">8. Gestión de Usuarios (Crear Usuarios)</option>
           </select>
           <ChevronDown className="w-5 h-5 text-ted-red absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
@@ -2282,8 +2283,8 @@ export const AdminDashboardPage: React.FC = () => {
                 )}
                 <span>{waMsg.text}</span>
               </div>
-              <button onClick={() => setWaMsg(null)} className="text-zinc-400 hover:text-white ml-2">
-                ✕
+              <button onClick={() => setWaMsg(null)} className="text-zinc-400 hover:text-white ml-2 cursor-pointer">
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
@@ -2847,9 +2848,9 @@ export const AdminDashboardPage: React.FC = () => {
               {userSearchTerm && (
                 <button
                   onClick={() => setUserSearchTerm('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white cursor-pointer"
                 >
-                  ✕
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
@@ -3086,11 +3087,11 @@ export const AdminDashboardPage: React.FC = () => {
                 onChange={(e) => setUserFormRole(e.target.value as UserRole)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-ted-red text-xs sm:text-sm"
               >
-                <option value="ADMIN">👑 Administrador (Acceso Total y Configuración)</option>
-                <option value="VALIDATOR">💳 Validador (Cola Bancaria y Comprobantes)</option>
-                <option value="VOLUNTEER">🤝 Voluntario (Mesa de Registro, Efectivo y WhatsApp)</option>
-                <option value="CHECKIN">🎟️ Escáner Puerta (Check-in con QR y Aforo)</option>
-                <option value="STAFF">🛡️ Staff General (Apoyo Logístico)</option>
+                <option value="ADMIN">Administrador (Acceso Total y Configuración)</option>
+                <option value="VALIDATOR">Validador (Cola Bancaria y Comprobantes)</option>
+                <option value="VOLUNTEER">Voluntario (Mesa de Registro, Efectivo y WhatsApp)</option>
+                <option value="CHECKIN">Escáner Puerta (Check-in con QR y Aforo)</option>
+                <option value="STAFF">Staff General (Apoyo Logístico)</option>
               </select>
               <p className="text-[11px] text-zinc-500 mt-1.5">
                 {getUserRoleBadge(userFormRole).desc}
@@ -3281,7 +3282,7 @@ export const AdminDashboardPage: React.FC = () => {
                   />
                   {speakerFormImage && (
                     <p className="text-[10px] text-emerald-400 mt-1 font-mono truncate">
-                      ✓ Archivo: {speakerFormImage.name}
+                      Archivo cargado: {speakerFormImage.name}
                     </p>
                   )}
                 </div>
