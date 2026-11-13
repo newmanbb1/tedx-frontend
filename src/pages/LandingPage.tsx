@@ -6,6 +6,13 @@ import {
   Award,
   Maximize2,
   X,
+  Check,
+  Crown,
+  Star,
+  Ticket,
+  Plus,
+  Minus,
+  ShieldCheck,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EventData, SpeakerData, BackgroundImageData } from '../types/index.js';
@@ -44,6 +51,62 @@ const DEFAULT_SPEAKERS = [
     imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
   },
 ];
+
+const getTicketTierConfig = (name: string) => {
+  const upper = name.toUpperCase();
+  if (upper.includes('SUPER') || upper.includes('PLATINUM') || upper.includes('DIAMANTE')) {
+    return {
+      badge: 'Acceso Élite',
+      badgeClass: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
+      Icon: Crown,
+      iconColor: 'text-amber-400',
+      glowColor: 'bg-amber-500/10',
+      popular: false,
+      tagline: 'Experiencia exclusiva y acceso privado con los oradores.',
+      features: [
+        'Ubicación preferencial en primeras filas del teatro',
+        'Acceso exclusivo al Cóctel & Sala Privada de Speakers',
+        'Kit TEDx Oficial Premium (Edición Coleccionista)',
+        'Acreditación Fast-Track preferencial sin filas',
+        'Certificado Digital Oficial Verificado con QR',
+        'Coffee Break de alta gama & Networking VIP',
+      ],
+    };
+  }
+  if (upper.includes('VIP')) {
+    return {
+      badge: 'Más Popular',
+      badgeClass: 'bg-ted-red/20 text-red-300 border-ted-red/40',
+      Icon: Star,
+      iconColor: 'text-ted-red',
+      glowColor: 'bg-ted-red/15',
+      popular: true,
+      tagline: 'La opción predilecta para vivir la experiencia TEDx.',
+      features: [
+        'Asiento en sector preferencial del auditorio',
+        'Kit TEDx Oficial conmemorativo 2026',
+        'Acceso a Coffee Break y Dinámicas de Innovación',
+        'Certificado Digital Oficial con QR institucional',
+        'Networking con participantes y líderes locales',
+      ],
+    };
+  }
+  return {
+    badge: 'Pase General',
+    badgeClass: 'bg-zinc-800/80 text-zinc-300 border-zinc-700/80',
+    Icon: Ticket,
+    iconColor: 'text-zinc-400',
+    glowColor: 'bg-zinc-500/5',
+    popular: false,
+    tagline: 'Acceso a una jornada completa de ideas transformadoras.',
+    features: [
+      'Acceso completo a todas las conferencias magistrales',
+      'Kit oficial de bienvenida TEDx USFX',
+      'Certificado Digital Oficial de Asistencia con QR',
+      'Acceso a stands interactivos y feria del evento',
+    ],
+  };
+};
 
 export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets, onNavigate }) => {
   const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>({});
@@ -307,44 +370,153 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
           {event?.ticketTypes.map((tt) => {
             const isSoldOut = tt.remainingQuota <= 0;
             const currentQty = selectedQuantities[tt.id] || 0;
+            const tier = getTicketTierConfig(tt.name);
 
             return (
-              <div
+              <motion.div
                 key={tt.id}
-                className="bg-zinc-900/80 border border-zinc-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between"
+                whileHover={{ y: -6 }}
+                transition={{ duration: 0.2 }}
+                className={`relative rounded-3xl p-6 sm:p-8 flex flex-col justify-between overflow-hidden transition-all duration-300 ${
+                  currentQty > 0
+                    ? 'bg-zinc-900 border-2 border-ted-red shadow-2xl shadow-ted-red/20 ring-1 ring-ted-red/50'
+                    : tier.popular
+                    ? 'bg-gradient-to-b from-zinc-900/95 via-zinc-900/90 to-zinc-950 border-2 border-ted-red/40 hover:border-ted-red shadow-xl shadow-ted-red/10'
+                    : 'bg-gradient-to-b from-zinc-900/90 via-zinc-900/80 to-zinc-950 border border-zinc-800 hover:border-zinc-700 shadow-lg'
+                }`}
               >
+                {/* Resplandor ambiental superior */}
+                <div
+                  className={`absolute -top-24 -right-24 w-48 h-48 ${tier.glowColor} rounded-full blur-3xl pointer-events-none`}
+                />
+
                 <div>
-                  <h3 className="text-2xl font-black text-white">{tt.name}</h3>
-                  <p className="text-sm text-zinc-400 mt-2 min-h-[48px]">{tt.description}</p>
-                  <div className="mt-6 flex items-baseline">
-                    <span className="text-4xl font-black text-white font-mono">Bs {tt.price.toFixed(2)}</span>
+                  {/* Badge de Categoría y TEDx Pass */}
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border backdrop-blur-sm ${tier.badgeClass}`}
+                    >
+                      <tier.Icon className="w-3.5 h-3.5" />
+                      {tier.badge}
+                    </span>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />
+                      Boleto Oficial
+                    </span>
+                  </div>
+
+                  {/* Nombre y descripción / tagline */}
+                  <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">
+                    {tt.name}
+                  </h3>
+                  <p className="text-xs text-zinc-400 mt-2 min-h-[36px] leading-relaxed">
+                    {tt.description || tier.tagline}
+                  </p>
+
+                  {/* Caja de Precio Estilizada */}
+                  <div className="mt-5 p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 flex items-baseline justify-between shadow-inner">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold block">
+                        Inversión Oficial
+                      </span>
+                      <div className="flex items-baseline gap-1 mt-0.5">
+                        <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
+                          Bs {tt.price.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-zinc-400 font-medium">/ persona</span>
+                  </div>
+
+                  {/* Muescas decorativas de boleto / ticket stub */}
+                  <div className="relative my-6 -mx-6 sm:-mx-8">
+                    <div className="border-b border-dashed border-zinc-800" />
+                    <div className="absolute -left-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#0D0D0D] border-r border-zinc-800" />
+                    <div className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#0D0D0D] border-l border-zinc-800" />
+                  </div>
+
+                  {/* Lista de Beneficios y Accesos */}
+                  <div className="space-y-3 mb-6">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                      Beneficios incluidos:
+                    </p>
+                    <ul className="space-y-2.5">
+                      {tier.features.map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-xs text-zinc-300">
+                          <div
+                            className={`mt-0.5 rounded-full p-0.5 shrink-0 ${
+                              tier.popular
+                                ? 'bg-ted-red/20 text-ted-red'
+                                : 'bg-emerald-500/20 text-emerald-400'
+                            }`}
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </div>
+                          <span className="leading-tight">{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
 
-                <div className="pt-8 border-t border-zinc-800 flex items-center justify-between">
-                  <div className="flex items-center space-x-3 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
-                    <button
-                      onClick={() => handleQtyChange(tt.id, -1, tt.remainingQuota)}
-                      disabled={currentQty === 0 || isSoldOut}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-zinc-800 disabled:opacity-30"
-                    >
-                      -
-                    </button>
-                    <span className="w-6 text-center font-bold text-white">{currentQty}</span>
-                    <button
-                      onClick={() => handleQtyChange(tt.id, 1, tt.remainingQuota)}
-                      disabled={currentQty >= tt.remainingQuota || isSoldOut}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-zinc-800 disabled:opacity-30"
-                    >
-                      +
-                    </button>
+                {/* Contador y Selector de Cantidad */}
+                <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-between gap-3 mt-auto">
+                  <div>
+                    <span className="text-xs font-semibold block text-white">
+                      {currentQty > 0
+                        ? `${currentQty} pase${currentQty > 1 ? 's' : ''} listo${currentQty > 1 ? 's' : ''}`
+                        : 'Seleccionar pases:'}
+                    </span>
+                    {currentQty > 0 ? (
+                      <span className="font-mono text-ted-red font-bold text-xs">
+                        Subtotal: Bs {(currentQty * tt.price).toFixed(2)}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-zinc-400">
+                        {isSoldOut ? 'Cupos agotados' : 'Disponibilidad activa'}
+                      </span>
+                    )}
                   </div>
+
+                  {isSoldOut ? (
+                    <span className="px-4 py-2 rounded-xl bg-zinc-800 text-zinc-400 text-xs font-bold uppercase">
+                      Agotado
+                    </span>
+                  ) : (
+                    <div className="flex items-center bg-zinc-950 p-1 rounded-2xl border border-zinc-800 shadow-inner">
+                      <button
+                        type="button"
+                        onClick={() => handleQtyChange(tt.id, -1, tt.remainingQuota)}
+                        disabled={currentQty === 0}
+                        aria-label="Restar entrada"
+                        className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 active:scale-95 disabled:opacity-20 disabled:hover:bg-zinc-900 transition-all cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="w-9 text-center font-black text-white font-mono text-base">
+                        {currentQty}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleQtyChange(tt.id, 1, tt.remainingQuota)}
+                        disabled={currentQty >= tt.remainingQuota}
+                        aria-label="Agregar entrada"
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center active:scale-95 transition-all cursor-pointer disabled:cursor-not-allowed ${
+                          currentQty > 0
+                            ? 'bg-ted-red text-white hover:bg-red-700 shadow-md shadow-ted-red/30'
+                            : 'bg-zinc-800 text-white hover:bg-zinc-700'
+                        } disabled:opacity-20`}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
