@@ -33,7 +33,6 @@ import {
   UserPlus,
   EyeOff,
   Shield,
-  ChevronDown,
   X,
 } from 'lucide-react';
 import {
@@ -1061,160 +1060,135 @@ export const AdminDashboardPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
       {/* Header del Panel */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
-        <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ted-red uppercase tracking-widest mb-1.5">
-            <Shield className="w-4 h-4 text-ted-red" />
-            Portal Administrativo Oficial TEDx
+      <div className="border-b border-zinc-800 pb-5">
+        <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ted-red uppercase tracking-widest mb-1.5">
+          <Shield className="w-4 h-4 text-ted-red" />
+          Portal Administrativo Oficial TEDx
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          Panel de Administración
+        </h1>
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
+          Control de validación bancaria, conferencistas, tarifas en Bs, configuración de cobro QR y accesos del equipo.
+        </p>
+      </div>
+
+      {/* Barra de Navegación Única del Panel (Mobile-First Touch Swipeable) */}
+      <div className="relative -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="w-full overflow-x-auto no-scrollbar pb-1">
+          <div className="inline-flex min-w-max bg-zinc-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-zinc-800 gap-1.5">
+            <button
+              onClick={() => setActiveAdminTab('orders')}
+              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                activeAdminTab === 'orders'
+                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <DollarSign className="w-4 h-4" />
+              <span>Órdenes <span className="hidden md:inline">& Validaciones</span></span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('speakers')}
+              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                activeAdminTab === 'speakers'
+                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Speakers</span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('certificates')}
+              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                activeAdminTab === 'certificates'
+                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Award className="w-4 h-4" />
+              <span>Certificados</span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('tickets')}
+              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                activeAdminTab === 'tickets'
+                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Ticket className="w-4 h-4" />
+              <span>Entradas <span className="hidden sm:inline">(Bs)</span></span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('payment')}
+              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                activeAdminTab === 'payment'
+                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <QrCode className="w-4 h-4 text-amber-400" />
+              <span>Pago QR</span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('backgrounds')}
+              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                activeAdminTab === 'backgrounds'
+                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Image className="w-4 h-4" />
+              <span>Fondos</span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('whatsapp')}
+              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                activeAdminTab === 'whatsapp'
+                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <MessageCircle className="w-4 h-4 text-emerald-400" />
+              <span>WhatsApp</span>
+              {waStatus && (
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    waStatus.state === 'open'
+                      ? 'bg-emerald-400 animate-pulse'
+                      : waStatus.state === 'connecting'
+                      ? 'bg-amber-400 animate-ping'
+                      : 'bg-rose-500'
+                  }`}
+                />
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('users')}
+              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                activeAdminTab === 'users'
+                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Users className="w-4 h-4 text-blue-400" />
+              <span>Usuarios</span>
+              {usersList.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-zinc-800 text-[10px] text-zinc-300 font-mono">
+                  {usersList.length}
+                </span>
+              )}
+            </button>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-            Panel de Administración
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-3xl">
-            Control de validación bancaria, ponentes oficiales, tarifas en Bs, configuración de cobro QR y gestión de accesos del equipo.
-          </p>
-        </div>
-      </div>
-
-      {/* Selector Móvil Rápido (Dropdown táctil para pantallas pequeñas) */}
-      <div className="lg:hidden space-y-1.5">
-        <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
-          Ir a sección del panel:
-        </label>
-        <div className="relative">
-          <select
-            value={activeAdminTab}
-            onChange={(e) => setActiveAdminTab(e.target.value as any)}
-            className="w-full bg-zinc-900 border-2 border-ted-red text-white font-bold text-sm rounded-2xl px-4 py-3.5 appearance-none focus:outline-none focus:ring-2 focus:ring-ted-red/40 shadow-xl cursor-pointer"
-          >
-            <option value="orders">1. Órdenes y Validaciones</option>
-            <option value="speakers">2. Speakers Oficiales</option>
-            <option value="certificates">3. Plantillas de Certificados</option>
-            <option value="tickets">4. Entradas y Precios (Bs)</option>
-            <option value="payment">5. Configuración Pago QR (Subir QR)</option>
-            <option value="backgrounds">6. Imágenes de Fondo</option>
-            <option value="whatsapp">7. WhatsApp API (Evolution)</option>
-            <option value="users">8. Gestión de Usuarios (Crear Usuarios)</option>
-          </select>
-          <ChevronDown className="w-5 h-5 text-ted-red absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-        </div>
-      </div>
-
-      {/* Pestañas de Navegación de Ancho Completo con Scroll Horizontal */}
-      <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/50">
-        <div className="inline-flex min-w-full lg:min-w-max bg-zinc-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-zinc-800 gap-1.5">
-          <button
-            onClick={() => setActiveAdminTab('orders')}
-            className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap cursor-pointer ${
-              activeAdminTab === 'orders'
-                ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-            }`}
-          >
-            <DollarSign className="w-4 h-4" />
-            <span>Órdenes y Validaciones</span>
-          </button>
-
-          <button
-            onClick={() => setActiveAdminTab('speakers')}
-            className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap cursor-pointer ${
-              activeAdminTab === 'speakers'
-                ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Speakers Oficiales</span>
-          </button>
-
-          <button
-            onClick={() => setActiveAdminTab('certificates')}
-            className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap cursor-pointer ${
-              activeAdminTab === 'certificates'
-                ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-            }`}
-          >
-            <Award className="w-4 h-4" />
-            <span>Plantillas Certificados</span>
-          </button>
-
-          <button
-            onClick={() => setActiveAdminTab('tickets')}
-            className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap cursor-pointer ${
-              activeAdminTab === 'tickets'
-                ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-            }`}
-          >
-            <Ticket className="w-4 h-4" />
-            <span>Entradas y Precios (Bs)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveAdminTab('payment')}
-            className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap cursor-pointer ${
-              activeAdminTab === 'payment'
-                ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-            }`}
-          >
-            <QrCode className="w-4 h-4 text-amber-400" />
-            <span>Configuración Pago QR</span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 font-mono font-bold">
-              Subir QR
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveAdminTab('backgrounds')}
-            className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap cursor-pointer ${
-              activeAdminTab === 'backgrounds'
-                ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-            }`}
-          >
-            <Image className="w-4 h-4" />
-            <span>Imágenes de Fondo</span>
-          </button>
-
-          <button
-            onClick={() => setActiveAdminTab('whatsapp')}
-            className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap cursor-pointer ${
-              activeAdminTab === 'whatsapp'
-                ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-            }`}
-          >
-            <MessageCircle className="w-4 h-4 text-emerald-400" />
-            <span>WhatsApp API</span>
-            {waStatus && (
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  waStatus.state === 'open'
-                    ? 'bg-emerald-400 animate-pulse'
-                    : waStatus.state === 'connecting'
-                    ? 'bg-amber-400 animate-ping'
-                    : 'bg-rose-500'
-                }`}
-              />
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveAdminTab('users')}
-            className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap cursor-pointer ${
-              activeAdminTab === 'users'
-                ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-            }`}
-          >
-            <Users className="w-4 h-4 text-blue-400" />
-            <span>Gestión de Usuarios</span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300 font-mono font-bold">
-              Crear
-            </span>
-          </button>
         </div>
       </div>
 
