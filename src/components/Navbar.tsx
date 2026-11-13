@@ -53,13 +53,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center cursor-pointer group"
             onClick={() => handleNav('landing')}
           >
-            <div className="flex items-baseline tracking-tighter">
-              <span className="text-3xl font-black text-ted-red group-hover:scale-105 transition-transform">
-                TED<span className="text-xl align-super">x</span>
-              </span>
-              <span className="ml-2 text-2xl font-bold text-white tracking-tight">
-                USFX
-              </span>
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/tedx-x-logo.png"
+                alt="TEDx X Oficial"
+                className="w-8 h-8 object-contain group-hover:scale-110 transition-transform"
+              />
+              <div className="flex items-baseline tracking-tighter">
+                <span className="text-3xl font-black text-ted-red group-hover:scale-105 transition-transform">
+                  TED<span className="text-xl align-super">x</span>
+                </span>
+                <span className="ml-2 text-2xl font-bold text-white tracking-tight">
+                  USFX
+                </span>
+              </div>
             </div>
           </div>
 
