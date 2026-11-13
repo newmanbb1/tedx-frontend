@@ -2484,11 +2484,12 @@ export const AdminDashboardPage: React.FC = () => {
                       key={sponsor.id}
                       className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-700 transition-all space-y-3"
                     >
-                      <div className="h-28 w-full bg-zinc-950 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-center overflow-hidden">
+                      <div className="h-28 w-full bg-zinc-950/80 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-center overflow-hidden relative">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.06)_0%,_transparent_75%)] pointer-events-none" />
                         <img
-                          src={sponsor.logoUrl}
+                          src={sponsor.logoUrl.includes('?') ? sponsor.logoUrl : `${sponsor.logoUrl}?v=2`}
                           alt={sponsor.name}
-                          className="max-h-full max-w-full object-contain"
+                          className="max-h-full max-w-full object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
                         />
                       </div>
                       <div className="space-y-1">
