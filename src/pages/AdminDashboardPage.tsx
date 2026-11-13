@@ -35,6 +35,7 @@ import {
   Shield,
   X,
   Building2,
+  ChevronDown,
 } from 'lucide-react';
 import {
   DashboardStats,
@@ -63,6 +64,7 @@ import { AlertModal } from '../components/ui/AlertModal.js';
 
 export const AdminDashboardPage: React.FC = () => {
   const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'speakers' | 'certificates' | 'tickets' | 'payment' | 'backgrounds' | 'sponsors' | 'whatsapp' | 'users'>('orders');
+  const [mobileTabMenuOpen, setMobileTabMenuOpen] = useState(false);
 
   // Pestaña WhatsApp (Evolution API)
   const [waStatus, setWaStatus] = useState<WhatsAppInstanceStatus | null>(null);
@@ -1169,141 +1171,257 @@ export const AdminDashboardPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Barra de Navegación Única del Panel (Mobile-First Touch Swipeable) */}
-      <div className="relative -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="w-full overflow-x-auto no-scrollbar pb-1">
-          <div className="inline-flex min-w-max bg-zinc-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-zinc-800 gap-1.5">
-            <button
-              onClick={() => setActiveAdminTab('orders')}
-              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                activeAdminTab === 'orders'
-                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-              }`}
-            >
-              <DollarSign className="w-4 h-4" />
-              <span>Órdenes <span className="hidden md:inline">& Validaciones</span></span>
-            </button>
+      {/* Configuración declarativa de pestañas */}
+      {(() => {
+        const adminTabsConfig = [
+          {
+            id: 'orders' as const,
+            label: 'Órdenes',
+            fullLabel: 'Órdenes & Validaciones',
+            icon: <DollarSign className="w-4 h-4 text-emerald-400" />,
+            badge: stats ? `${stats.pendingApprovals}` : undefined,
+          },
+          {
+            id: 'speakers' as const,
+            label: 'Speakers',
+            fullLabel: 'Speakers Oficiales',
+            icon: <Users className="w-4 h-4 text-purple-400" />,
+            badge: speakers.length > 0 ? `${speakers.length}` : undefined,
+          },
+          {
+            id: 'certificates' as const,
+            label: 'Certificados',
+            fullLabel: 'Certificados Digitales',
+            icon: <Award className="w-4 h-4 text-amber-400" />,
+          },
+          {
+            id: 'tickets' as const,
+            label: 'Entradas',
+            fullLabel: 'Entradas & Tarifas Bs',
+            icon: <Ticket className="w-4 h-4 text-rose-400" />,
+            badge: ticketTypes.length > 0 ? `${ticketTypes.length}` : undefined,
+          },
+          {
+            id: 'payment' as const,
+            label: 'Pago QR',
+            fullLabel: 'Configuración Pago QR',
+            icon: <QrCode className="w-4 h-4 text-amber-400" />,
+          },
+          {
+            id: 'backgrounds' as const,
+            label: 'Fondos',
+            fullLabel: 'Fondos Portada',
+            icon: <Image className="w-4 h-4 text-sky-400" />,
+            badge: backgroundImages.length > 0 ? `${backgroundImages.length}` : undefined,
+          },
+          {
+            id: 'sponsors' as const,
+            label: 'Auspiciadores',
+            fullLabel: 'Auspiciadores & Aliados',
+            icon: <Building2 className="w-4 h-4 text-emerald-400" />,
+            badge: sponsorsList.length > 0 ? `${sponsorsList.length}` : undefined,
+          },
+          {
+            id: 'whatsapp' as const,
+            label: 'WhatsApp',
+            fullLabel: 'Servicio WhatsApp',
+            icon: <MessageCircle className="w-4 h-4 text-emerald-400" />,
+            hasStatusDot: true,
+            statusState: waStatus?.state,
+          },
+          {
+            id: 'users' as const,
+            label: 'Usuarios',
+            fullLabel: 'Usuarios & Accesos',
+            icon: <ShieldCheck className="w-4 h-4 text-blue-400" />,
+            badge: usersList.length > 0 ? `${usersList.length}` : undefined,
+          },
+        ];
 
-            <button
-              onClick={() => setActiveAdminTab('speakers')}
-              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                activeAdminTab === 'speakers'
-                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>Speakers</span>
-            </button>
+        const currentTab = adminTabsConfig.find((t) => t.id === activeAdminTab) || adminTabsConfig[0];
 
-            <button
-              onClick={() => setActiveAdminTab('certificates')}
-              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                activeAdminTab === 'certificates'
-                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-              }`}
-            >
-              <Award className="w-4 h-4" />
-              <span>Certificados</span>
-            </button>
+        return (
+          <>
+            {/* VISTA MÓVIL (sm:hidden): Menú desplegable táctil + Barra de píldoras suave */}
+            <div className="sm:hidden space-y-2.5">
+              {/* Botón Selector Principal en Celular */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setMobileTabMenuOpen(!mobileTabMenuOpen)}
+                  className="w-full flex items-center justify-between bg-zinc-900/95 border border-zinc-800 rounded-2xl p-3 text-white text-xs font-bold shadow-lg active:bg-zinc-800 transition-all cursor-pointer"
+                >
+                  <div className="flex items-center space-x-2.5 min-w-0">
+                    <span className="text-zinc-500 text-[10px] uppercase font-mono tracking-wider shrink-0">Sección:</span>
+                    <div className="flex items-center space-x-2 min-w-0">
+                      {currentTab.icon}
+                      <span className="truncate text-white font-extrabold text-sm">{currentTab.fullLabel}</span>
+                    </div>
+                    {currentTab.badge && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700 shrink-0">
+                        {currentTab.badge}
+                      </span>
+                    )}
+                    {currentTab.hasStatusDot && (
+                      <span
+                        className={`w-2 h-2 rounded-full shrink-0 ${
+                          currentTab.statusState === 'open'
+                            ? 'bg-emerald-400 animate-pulse'
+                            : currentTab.statusState === 'connecting'
+                            ? 'bg-amber-400 animate-ping'
+                            : 'bg-rose-500'
+                        }`}
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-1 shrink-0 ml-2 text-zinc-400">
+                    <span className="text-[10px] text-zinc-500 font-medium">Cambiar</span>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        mobileTabMenuOpen ? 'rotate-180 text-ted-red' : ''
+                      }`}
+                    />
+                  </div>
+                </button>
 
-            <button
-              onClick={() => setActiveAdminTab('tickets')}
-              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                activeAdminTab === 'tickets'
-                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-              }`}
-            >
-              <Ticket className="w-4 h-4" />
-              <span>Entradas <span className="hidden sm:inline">(Bs)</span></span>
-            </button>
+                {/* Menú Desplegable con todas las 9 secciones */}
+                {mobileTabMenuOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-zinc-950 border border-zinc-800 rounded-2xl p-2 shadow-2xl space-y-1">
+                    {adminTabsConfig.map((tab) => {
+                      const isSelected = activeAdminTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveAdminTab(tab.id);
+                            setMobileTabMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-ted-red text-white shadow-md shadow-ted-red/20'
+                              : 'text-zinc-300 hover:text-white hover:bg-zinc-900 active:bg-zinc-800'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2.5">
+                            {tab.icon}
+                            <span>{tab.fullLabel}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {tab.badge && (
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
+                                  isSelected
+                                    ? 'bg-black/30 text-white'
+                                    : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
+                                }`}
+                              >
+                                {tab.badge}
+                              </span>
+                            )}
+                            {tab.hasStatusDot && (
+                              <span
+                                className={`w-2 h-2 rounded-full ${
+                                  tab.statusState === 'open'
+                                    ? 'bg-emerald-400'
+                                    : tab.statusState === 'connecting'
+                                    ? 'bg-amber-400'
+                                    : 'bg-rose-500'
+                                }`}
+                              />
+                            )}
+                            {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
-            <button
-              onClick={() => setActiveAdminTab('payment')}
-              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                activeAdminTab === 'payment'
-                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-              }`}
-            >
-              <QrCode className="w-4 h-4 text-amber-400" />
-              <span>Pago QR</span>
-            </button>
+              {/* Píldoras Rápidas Deslizables con Gradientes que indican scroll continuo */}
+              <div className="relative -mx-4 px-4">
+                <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-ted-black to-transparent z-10" />
+                <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-ted-black to-transparent z-10" />
 
-            <button
-              onClick={() => setActiveAdminTab('backgrounds')}
-              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                activeAdminTab === 'backgrounds'
-                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-              }`}
-            >
-              <Image className="w-4 h-4" />
-              <span>Fondos</span>
-            </button>
+                <div className="overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-1.5 py-1 px-1">
+                  {adminTabsConfig.map((tab) => {
+                    const isSelected = activeAdminTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveAdminTab(tab.id)}
+                        className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer border ${
+                          isSelected
+                            ? 'bg-ted-red text-white border-ted-red shadow-lg shadow-ted-red/25'
+                            : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:bg-zinc-800'
+                        }`}
+                      >
+                        {tab.icon}
+                        <span>{tab.label}</span>
+                        {tab.hasStatusDot && (
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              tab.statusState === 'open'
+                                ? 'bg-emerald-400'
+                                : tab.statusState === 'connecting'
+                                ? 'bg-amber-400'
+                                : 'bg-rose-500'
+                            }`}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
 
-            <button
-              onClick={() => setActiveAdminTab('sponsors')}
-              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                activeAdminTab === 'sponsors'
-                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-              }`}
-            >
-              <Building2 className="w-4 h-4 text-emerald-400" />
-              <span>Auspiciadores</span>
-              {sponsorsList.length > 0 && (
-                <span className="ml-1 text-[10px] font-mono bg-zinc-950/80 px-1.5 py-0.5 rounded-full border border-zinc-700/60">
-                  {sponsorsList.length}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setActiveAdminTab('whatsapp')}
-              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                activeAdminTab === 'whatsapp'
-                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-              }`}
-            >
-              <MessageCircle className="w-4 h-4 text-emerald-400" />
-              <span>WhatsApp</span>
-              {waStatus && (
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    waStatus.state === 'open'
-                      ? 'bg-emerald-400 animate-pulse'
-                      : waStatus.state === 'connecting'
-                      ? 'bg-amber-400 animate-ping'
-                      : 'bg-rose-500'
-                  }`}
-                />
-              )}
-            </button>
-
-            <button
-              onClick={() => setActiveAdminTab('users')}
-              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                activeAdminTab === 'users'
-                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-              }`}
-            >
-              <Users className="w-4 h-4 text-blue-400" />
-              <span>Usuarios</span>
-              {usersList.length > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-zinc-800 text-[10px] text-zinc-300 font-mono">
-                  {usersList.length}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
+            {/* VISTA DESKTOP / TABLET (hidden sm:block) */}
+            <div className="hidden sm:block relative">
+              <div className="w-full overflow-x-auto no-scrollbar pb-1">
+                <div className="inline-flex min-w-max bg-zinc-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-zinc-800 gap-1.5">
+                  {adminTabsConfig.map((tab) => {
+                    const isSelected = activeAdminTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveAdminTab(tab.id)}
+                        className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                          isSelected
+                            ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                            : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                        }`}
+                      >
+                        {tab.icon}
+                        <span>{tab.label}</span>
+                        {tab.badge && (
+                          <span className="ml-1 text-[10px] font-mono bg-zinc-950/80 px-1.5 py-0.5 rounded-full border border-zinc-700/60">
+                            {tab.badge}
+                          </span>
+                        )}
+                        {tab.hasStatusDot && (
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              tab.statusState === 'open'
+                                ? 'bg-emerald-400 animate-pulse'
+                                : tab.statusState === 'connecting'
+                                ? 'bg-amber-400 animate-ping'
+                                : 'bg-rose-500'
+                            }`}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      })()}
 
       {/* PESTAÑA 1: ÓRDENES Y VALIDACIONES */}
       {activeAdminTab === 'orders' && (
