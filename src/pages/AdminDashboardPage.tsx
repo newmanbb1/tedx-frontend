@@ -34,6 +34,7 @@ import {
   EyeOff,
   Shield,
   X,
+  Building2,
 } from 'lucide-react';
 import {
   DashboardStats,
@@ -51,6 +52,7 @@ import {
   WhatsAppTestResult,
   WhatsAppQueueStats,
   WhatsAppPairingCodeResponse,
+  SponsorData,
 } from '../types/index.js';
 import { api } from '../services/api.js';
 import { Badge } from '../components/ui/Badge.js';
@@ -60,7 +62,7 @@ import { ConfirmModal } from '../components/ui/ConfirmModal.js';
 import { AlertModal } from '../components/ui/AlertModal.js';
 
 export const AdminDashboardPage: React.FC = () => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'speakers' | 'certificates' | 'tickets' | 'payment' | 'backgrounds' | 'whatsapp' | 'users'>('orders');
+  const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'speakers' | 'certificates' | 'tickets' | 'payment' | 'backgrounds' | 'sponsors' | 'whatsapp' | 'users'>('orders');
 
   // Pestaña WhatsApp (Evolution API)
   const [waStatus, setWaStatus] = useState<WhatsAppInstanceStatus | null>(null);
@@ -154,6 +156,17 @@ export const AdminDashboardPage: React.FC = () => {
   const [bgTitleInput, setBgTitleInput] = useState('');
   const [bgLoading, setBgLoading] = useState(false);
   const [bgMsg, setBgMsg] = useState<string | null>(null);
+
+  // Pestaña Auspiciadores y Aliados Oficiales
+  const [sponsorsList, setSponsorsList] = useState<SponsorData[]>([]);
+  const [sponsorsLoading, setSponsorsLoading] = useState(false);
+  const [sponsorNameInput, setSponsorNameInput] = useState('');
+  const [sponsorWebsiteInput, setSponsorWebsiteInput] = useState('');
+  const [sponsorTierInput, setSponsorTierInput] = useState('Oficial');
+  const [sponsorLogoFile, setSponsorLogoFile] = useState<File | null>(null);
+  const [sponsorLogoPreview, setSponsorLogoPreview] = useState<string | null>(null);
+  const [sponsorSubmitting, setSponsorSubmitting] = useState(false);
+  const [sponsorMsg, setSponsorMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Pestaña Gestión de Usuarios y Roles del Sistema
   const [usersList, setUsersList] = useState<AdminUserData[]>([]);
@@ -305,6 +318,18 @@ export const AdminDashboardPage: React.FC = () => {
       setBackgroundImages(res.images || []);
     } catch (err) {
       console.error('Error cargando fondos:', err);
+    }
+  };
+
+  const loadSponsorsList = async () => {
+    try {
+      setSponsorsLoading(true);
+      const res = await api.getAllSponsorsAdmin();
+      setSponsorsList(res.sponsors || []);
+    } catch (err) {
+      console.error('Error cargando auspiciadores:', err);
+    } finally {
+      setSponsorsLoading(false);
     }
   };
 
@@ -611,6 +636,7 @@ export const AdminDashboardPage: React.FC = () => {
     loadTicketTypes();
     loadPaymentSettings();
     loadBackgrounds();
+    loadSponsorsList();
     loadUsers();
     loadWhatsAppStatus(true);
     loadWhatsAppQueueStats();
@@ -619,6 +645,9 @@ export const AdminDashboardPage: React.FC = () => {
   useEffect(() => {
     if (activeAdminTab === 'users') {
       loadUsers();
+    }
+    if (activeAdminTab === 'sponsors') {
+      loadSponsorsList();
     }
   }, [activeAdminTab]);
 
@@ -694,6 +723,73 @@ export const AdminDashboardPage: React.FC = () => {
           loadBackgrounds();
         } catch (err: any) {
           showAlert('No se pudo eliminar la imagen de fondo. Inténtalo de nuevo.', 'error', 'Error');
+        }
+      },
+    });
+  };
+
+  const handleSponsorLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSponsorLogoFile(file);
+      const reader = new FileReader();
+      reader.onload = () => setSponsorLogoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCreateSponsor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sponsorNameInput.trim()) {
+      setSponsorMsg({ type: 'error', text: 'Por favor ingresa el nombre de la empresa o auspiciador.' });
+      return;
+    }
+    if (!sponsorLogoFile) {
+      setSponsorMsg({ type: 'error', text: 'Por favor selecciona el archivo de imagen con el logo.' });
+      return;
+    }
+
+    try {
+      setSponsorSubmitting(true);
+      setSponsorMsg(null);
+      const formData = new FormData();
+      formData.append('name', sponsorNameInput.trim());
+      formData.append('logo', sponsorLogoFile);
+      if (sponsorWebsiteInput.trim()) {
+        formData.append('websiteUrl', sponsorWebsiteInput.trim());
+      }
+      formData.append('tier', sponsorTierInput);
+      formData.append('order', String(sponsorsList.length + 1));
+      formData.append('isActive', 'true');
+
+      await api.createSponsor(formData);
+      setSponsorNameInput('');
+      setSponsorWebsiteInput('');
+      setSponsorLogoFile(null);
+      setSponsorLogoPreview(null);
+      setSponsorMsg({ type: 'success', text: 'Auspiciador guardado exitosamente.' });
+      loadSponsorsList();
+    } catch (err: any) {
+      setSponsorMsg({ type: 'error', text: err.message || 'Error al guardar el auspiciador.' });
+    } finally {
+      setSponsorSubmitting(false);
+    }
+  };
+
+  const handleDeleteSponsor = (id: string, name: string) => {
+    showConfirm({
+      title: '¿Eliminar Auspiciador?',
+      message: `¿Estás seguro de que deseas eliminar a "${name}" de los auspiciadores oficiales?`,
+      confirmText: 'Eliminar Auspiciador',
+      variant: 'danger',
+      onConfirm: async () => {
+        closeConfirm();
+        try {
+          await api.deleteSponsor(id);
+          showAlert('Auspiciador eliminado exitosamente.', 'success', 'Auspiciador Eliminado');
+          loadSponsorsList();
+        } catch (err: any) {
+          showAlert(err.message || 'Error al eliminar el auspiciador.', 'error', 'Error');
         }
       },
     });
@@ -1147,6 +1243,23 @@ export const AdminDashboardPage: React.FC = () => {
             >
               <Image className="w-4 h-4" />
               <span>Fondos</span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('sponsors')}
+              className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                activeAdminTab === 'sponsors'
+                  ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Building2 className="w-4 h-4 text-emerald-400" />
+              <span>Auspiciadores</span>
+              {sponsorsList.length > 0 && (
+                <span className="ml-1 text-[10px] font-mono bg-zinc-950/80 px-1.5 py-0.5 rounded-full border border-zinc-700/60">
+                  {sponsorsList.length}
+                </span>
+              )}
             </button>
 
             <button
@@ -2090,6 +2203,186 @@ export const AdminDashboardPage: React.FC = () => {
                           className="text-red-400 border-zinc-800 hover:bg-red-950/40 p-1.5 h-auto"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PESTAÑA: AUSPICIADORES Y ALIADOS OFICIALES */}
+      {activeAdminTab === 'sponsors' && (
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+              <Building2 className="w-5 h-5 text-ted-red" />
+              <span>Auspiciadores y Aliados Oficiales</span>
+            </h2>
+            <p className="text-xs text-zinc-400 mt-1">
+              Sube el logo y nombre de las marcas, empresas e instituciones aliadas. Se mostrarán en la portada y en el pie de página oficial.
+            </p>
+          </div>
+
+          {sponsorMsg && (
+            <div
+              className={`p-4 rounded-xl text-xs flex items-center gap-2 border ${
+                sponsorMsg.type === 'error'
+                  ? 'bg-red-950/80 text-red-200 border-red-800'
+                  : 'bg-emerald-950/80 text-emerald-200 border-emerald-800'
+              }`}
+            >
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{sponsorMsg.text}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Formulario para Crear Auspiciador */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 h-fit space-y-4">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <Plus className="w-4 h-4 text-ted-red" />
+                <span>Nuevo Auspiciador</span>
+              </h3>
+              <form onSubmit={handleCreateSponsor} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                    Nombre del Auspiciador / Marca *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={sponsorNameInput}
+                    onChange={(e) => setSponsorNameInput(e.target.value)}
+                    placeholder="Ej. USFX, Cervecería Sureña, Entel..."
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-ted-red"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                    Logo del Auspiciador * (PNG / JPG / SVG)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    required
+                    onChange={handleSponsorLogoChange}
+                    className="w-full text-xs text-zinc-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-zinc-800 file:text-white file:cursor-pointer"
+                  />
+                  {sponsorLogoPreview && (
+                    <div className="mt-3 p-3 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center justify-center">
+                      <img
+                        src={sponsorLogoPreview}
+                        alt="Vista previa logo"
+                        className="max-h-20 max-w-full object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                    Sitio Web o Red Social (Opcional)
+                  </label>
+                  <input
+                    type="url"
+                    value={sponsorWebsiteInput}
+                    onChange={(e) => setSponsorWebsiteInput(e.target.value)}
+                    placeholder="https://ejemplo.com"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-ted-red"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                    Categoría / Nivel
+                  </label>
+                  <select
+                    value={sponsorTierInput}
+                    onChange={(e) => setSponsorTierInput(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-ted-red"
+                  >
+                    <option value="Oficial">Oficial</option>
+                    <option value="Platino">Platino</option>
+                    <option value="Oro">Oro</option>
+                    <option value="Aliado Académico">Aliado Académico</option>
+                    <option value="Media Partner">Media Partner</option>
+                  </select>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="md"
+                  type="submit"
+                  disabled={sponsorSubmitting}
+                  className="w-full bg-ted-red hover:bg-red-700 text-white font-bold"
+                >
+                  {sponsorSubmitting ? 'Guardando...' : 'Guardar Auspiciador'}
+                </Button>
+              </form>
+            </div>
+
+            {/* Listado de Auspiciadores Registrados */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Auspiciadores Registrados ({sponsorsList.length})
+                </h3>
+                {sponsorsLoading && (
+                  <span className="text-xs text-zinc-500 font-mono animate-pulse">Cargando...</span>
+                )}
+              </div>
+
+              {sponsorsList.length === 0 ? (
+                <div className="p-8 text-center bg-zinc-900 border border-zinc-800 rounded-2xl text-zinc-500 text-xs">
+                  No hay auspiciadores registrados aún. Sube el logo y escribe el nombre en el formulario para agregarlo.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {sponsorsList.map((sponsor) => (
+                    <div
+                      key={sponsor.id}
+                      className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-700 transition-all space-y-3"
+                    >
+                      <div className="h-28 w-full bg-zinc-950 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={sponsor.logoUrl}
+                          alt={sponsor.name}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-sm font-bold text-white truncate">{sponsor.name}</h4>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 text-zinc-300 border border-zinc-700 shrink-0">
+                            {sponsor.tier || 'Oficial'}
+                          </span>
+                        </div>
+                        {sponsor.websiteUrl && (
+                          <a
+                            href={sponsor.websiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-ted-red hover:underline flex items-center gap-1 truncate"
+                          >
+                            <ExternalLink className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{sponsor.websiteUrl}</span>
+                          </a>
+                        )}
+                      </div>
+                      <div className="pt-2 border-t border-zinc-800/60 flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSponsor(sponsor.id, sponsor.name)}
+                          className="text-zinc-400 hover:text-red-400 hover:bg-red-950/40 text-xs flex items-center gap-1.5"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Eliminar</span>
                         </Button>
                       </div>
                     </div>

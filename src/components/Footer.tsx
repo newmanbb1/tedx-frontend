@@ -43,16 +43,31 @@ export const Footer: React.FC = () => {
           </div>
           
           {/* Sección de Sponsors */}
-          <div className="space-y-4 md:col-span-4 border-t border-zinc-900 pt-8">
-            <h4 className="text-sm font-semibold text-white tracking-wider uppercase text-center">Aliados y Auspiciadores</h4>
-            <div className="flex flex-wrap justify-center gap-6">
-              {sponsors.map((s) => (
-                <a key={s.id} href={s.websiteUrl || '#'} target="_blank" rel="noreferrer" className="bg-zinc-900 p-3 rounded-lg border border-zinc-800 hover:border-ted-red transition-all">
-                  <img src={s.logoUrl} alt={s.name} className="h-10 object-contain" />
-                </a>
-              ))}
+          {sponsors.length > 0 && (
+            <div className="space-y-4 md:col-span-4 border-t border-zinc-900 pt-8">
+              <h4 className="text-sm font-semibold text-white tracking-wider uppercase text-center">
+                Aliados y Auspiciadores
+              </h4>
+              <div className="flex flex-wrap items-center justify-center gap-6">
+                {sponsors.map((s) => (
+                  <a
+                    key={s.id}
+                    href={s.websiteUrl || '#'}
+                    target={s.websiteUrl ? '_blank' : undefined}
+                    rel="noreferrer"
+                    title={s.name}
+                    className="bg-zinc-900/90 hover:bg-zinc-800 px-5 py-3 rounded-2xl border border-zinc-800 hover:border-ted-red transition-all flex items-center justify-center group shadow-md"
+                  >
+                    <img
+                      src={s.logoUrl}
+                      alt={s.name}
+                      className="h-10 max-w-[160px] object-contain transition-transform group-hover:scale-105"
+                    />
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="mt-12 pt-8 border-t border-zinc-900 flex flex-col md:flex-row items-center justify-between text-xs text-zinc-400 gap-4">

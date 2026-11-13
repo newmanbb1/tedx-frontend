@@ -467,6 +467,39 @@ export const api = {
     return handleResponse(res);
   },
 
+  async getAllSponsorsAdmin(): Promise<{ sponsors: SponsorData[] }> {
+    const res = await fetch(`${API_BASE}/sponsors/admin`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
+  async createSponsor(formData: FormData): Promise<{ sponsor: SponsorData }> {
+    const res = await fetch(`${API_BASE}/sponsors`, {
+      method: 'POST',
+      headers: getAuthHeader(),
+      body: formData,
+    });
+    return handleResponse(res);
+  },
+
+  async updateSponsor(id: string, formData: FormData): Promise<{ sponsor: SponsorData }> {
+    const res = await fetch(`${API_BASE}/sponsors/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeader(),
+      body: formData,
+    });
+    return handleResponse(res);
+  },
+
+  async deleteSponsor(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/sponsors/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
   async getAllSpeakers(): Promise<{ speakers: SpeakerData[] }> {
     const res = await fetch(`${API_BASE}/speakers`, {
       headers: getAuthHeader(),
