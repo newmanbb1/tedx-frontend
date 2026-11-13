@@ -41,7 +41,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isCheckin = user?.role === 'CHECKIN' || user?.role === 'STAFF' || isAdmin;
 
   return (
-    <nav className="sticky top-0 z-40 w-full bg-ted-black/90 backdrop-blur-md border-b border-zinc-800/80">
+    <nav className={`sticky top-0 z-50 w-full border-b border-zinc-800/80 transition-colors ${
+      mobileMenuOpen ? 'bg-zinc-950' : 'bg-ted-black/90 backdrop-blur-md'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <div
@@ -186,9 +188,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Menú Drawer Móvil Full-Screen Moderno */}
+      {/* Menú Móvil Desplegable Robusto y 100% Visible */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-20 bottom-0 bg-zinc-950/98 backdrop-blur-2xl z-50 overflow-y-auto px-5 py-6 flex flex-col justify-between border-t border-zinc-800 animate-in slide-in-from-top-2 duration-200">
+        <div className="md:hidden w-full bg-zinc-950 border-t border-zinc-800/90 px-4 py-5 space-y-6 max-h-[calc(100vh-5rem)] overflow-y-auto shadow-2xl animate-in slide-in-from-top-2 duration-200">
           <div className="space-y-6">
             {/* Navegación Pública */}
             <div className="space-y-1.5">
