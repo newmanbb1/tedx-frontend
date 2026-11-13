@@ -50,6 +50,8 @@ import { api } from '../services/api.js';
 import { Badge } from '../components/ui/Badge.js';
 import { Button } from '../components/ui/Button.js';
 import { Modal } from '../components/ui/Modal.js';
+import { ConfirmModal } from '../components/ui/ConfirmModal.js';
+import { AlertModal } from '../components/ui/AlertModal.js';
 
 export const AdminDashboardPage: React.FC = () => {
   const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'speakers' | 'certificates' | 'tickets' | 'payment' | 'backgrounds' | 'whatsapp'>('orders');
@@ -146,6 +148,71 @@ export const AdminDashboardPage: React.FC = () => {
   const [bgTitleInput, setBgTitleInput] = useState('');
   const [bgLoading, setBgLoading] = useState(false);
   const [bgMsg, setBgMsg] = useState<string | null>(null);
+
+  // Modals de Confirmación y Alerta UI (Reemplazo total de confirm y alert del navegador)
+  const [confirmModalConfig, setConfirmModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    isLoading?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const [alertModalConfig, setAlertModalConfig] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+    type?: 'error' | 'success' | 'warning' | 'info';
+    buttonText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info',
+  });
+
+  const showConfirm = (config: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    isLoading?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }) => {
+    setConfirmModalConfig({ ...config, isOpen: true });
+  };
+
+  const closeConfirm = () => {
+    setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const showAlert = (
+    message: string,
+    type: 'error' | 'success' | 'warning' | 'info' = 'info',
+    title?: string,
+    buttonText?: string
+  ) => {
+    setAlertModalConfig({
+      isOpen: true,
+      message,
+      type,
+      title,
+      buttonText,
+    });
+  };
+
+  const closeAlert = () => {
+    setAlertModalConfig((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -329,19 +396,29 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const handleLogoutWhatsApp = async () => {
-    if (!confirm('¿Estás seguro de que deseas desvincular y cerrar la sesión del número actual de WhatsApp?')) return;
-    setWaActionLoading(true);
-    setWaMsg(null);
-    try {
-      await api.logoutWhatsAppInstance();
-      setWaMsg({ type: 'success', text: 'Dispositivo desvinculado. Escanea el nuevo código QR o genera un código para conectar.' });
-      await loadWhatsAppStatus();
-    } catch (err: any) {
-      setWaMsg({ type: 'error', text: err.message || 'Error al desvincular dispositivo.' });
-    } finally {
-      setWaActionLoading(false);
-    }
+  const handleLogoutWhatsApp = () => {
+    showConfirm({
+      title: '¿Desvincular WhatsApp?',
+      message: '¿Estás seguro de que deseas desvincular y cerrar la sesión del número actual de WhatsApp? Deberás escanear un nuevo código QR o generar un código de emparejamiento para volver a conectar.',
+      confirmText: 'Desvincular Dispositivo',
+      variant: 'danger',
+      onConfirm: async () => {
+        closeConfirm();
+        setWaActionLoading(true);
+        setWaMsg(null);
+        try {
+          await api.logoutWhatsAppInstance();
+          setWaMsg({ type: 'success', text: 'Dispositivo desvinculado. Escanea el nuevo código QR o genera un código para conectar.' });
+          showAlert('El dispositivo de WhatsApp se ha desvinculado correctamente.', 'success', 'WhatsApp Desvinculado');
+          await loadWhatsAppStatus();
+        } catch (err: any) {
+          setWaMsg({ type: 'error', text: err.message || 'Error al desvincular dispositivo.' });
+          showAlert(err.message || 'Error al desvincular dispositivo.', 'error', 'Error en WhatsApp');
+        } finally {
+          setWaActionLoading(false);
+        }
+      },
+    });
   };
 
   const handleSendWhatsAppTest = async (e: React.FormEvent) => {
@@ -433,14 +510,23 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const handleDeleteBackground = async (id: string) => {
-    if (!confirm('¿Seguro que deseas eliminar esta imagen de fondo?')) return;
-    try {
-      await api.deleteBackgroundImage(id);
-      loadBackgrounds();
-    } catch (err: any) {
-      alert('Error al eliminar imagen');
-    }
+  const handleDeleteBackground = (id: string) => {
+    showConfirm({
+      title: '¿Eliminar imagen de fondo?',
+      message: '¿Estás seguro de que deseas eliminar esta imagen? Ya no se mostrará en el carrusel de fondo de la portada oficial.',
+      confirmText: 'Eliminar Imagen',
+      variant: 'danger',
+      onConfirm: async () => {
+        closeConfirm();
+        try {
+          await api.deleteBackgroundImage(id);
+          showAlert('Imagen de fondo eliminada correctamente.', 'success', 'Imagen Eliminada');
+          loadBackgrounds();
+        } catch (err: any) {
+          showAlert('No se pudo eliminar la imagen de fondo. Inténtalo de nuevo.', 'error', 'Error');
+        }
+      },
+    });
   };
 
   const handleQrFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -585,7 +671,7 @@ export const AdminDashboardPage: React.FC = () => {
   const handleSaveSpeaker = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!speakerFormName.trim()) {
-      alert('Por favor ingresa el nombre del orador');
+      showAlert('Por favor ingresa el nombre del orador antes de guardar.', 'warning', 'Campo Obligatorio');
       return;
     }
     setSpeakerLoading(true);
@@ -610,22 +696,36 @@ export const AdminDashboardPage: React.FC = () => {
       }
 
       setSpeakerModalOpen(false);
+      showAlert(
+        editingSpeaker ? 'Los datos del orador se actualizaron con éxito.' : 'Nuevo orador añadido a la cartelera oficial.',
+        'success',
+        editingSpeaker ? 'Orador Actualizado' : 'Orador Guardado'
+      );
       await loadSpeakers();
     } catch (err: any) {
-      alert(`Error al guardar speaker: ${err.message}`);
+      showAlert(`Error al guardar orador: ${err.message}`, 'error', 'Error al Guardar');
     } finally {
       setSpeakerLoading(false);
     }
   };
 
-  const handleDeleteSpeaker = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar este orador?')) return;
-    try {
-      await api.deleteSpeaker(id);
-      await loadSpeakers();
-    } catch (err: any) {
-      alert(`Error al eliminar: ${err.message}`);
-    }
+  const handleDeleteSpeaker = (id: string, speakerName?: string) => {
+    showConfirm({
+      title: speakerName ? `¿Eliminar a "${speakerName}"?` : '¿Eliminar orador?',
+      message: 'Esta acción retirará permanentemente al disertante y su afiche oficial de la portada pública de TEDx USFX.',
+      confirmText: 'Eliminar Orador',
+      variant: 'danger',
+      onConfirm: async () => {
+        closeConfirm();
+        try {
+          await api.deleteSpeaker(id);
+          showAlert('El orador ha sido retirado de la cartelera oficial.', 'success', 'Orador Eliminado');
+          await loadSpeakers();
+        } catch (err: any) {
+          showAlert(`Error al eliminar: ${err.message}`, 'error', 'Error');
+        }
+      },
+    });
   };
 
   // =====================
@@ -652,9 +752,10 @@ export const AdminDashboardPage: React.FC = () => {
 
       await api.updateCertificateTemplate(templateModalCategory, formData);
       setTemplateModalCategory(null);
+      showAlert('La plantilla de certificado ha sido actualizada exitosamente.', 'success', 'Plantilla Actualizada');
       await loadTemplates();
     } catch (err: any) {
-      alert(`Error al actualizar plantilla: ${err.message}`);
+      showAlert(`Error al actualizar plantilla: ${err.message}`, 'error', 'Error');
     } finally {
       setTemplateLoading(false);
     }
@@ -729,6 +830,11 @@ export const AdminDashboardPage: React.FC = () => {
         });
       }
       setTicketModalOpen(false);
+      showAlert(
+        editingTicket ? 'La entrada se actualizó exitosamente.' : 'Nueva categoría de entrada creada para la venta.',
+        'success',
+        editingTicket ? 'Entrada Actualizada' : 'Entrada Creada'
+      );
       await loadTicketTypes();
       await loadData();
     } catch (err: any) {
@@ -738,18 +844,24 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const handleDeleteTicket = async (ticketId: string, ticketName: string) => {
-    if (!window.confirm(`¿Estás seguro de eliminar o retirar la categoría "${ticketName}"?`)) {
-      return;
-    }
-    try {
-      const res = await api.deleteTicketType(ticketId);
-      alert(res.message);
-      await loadTicketTypes();
-      await loadData();
-    } catch (err: any) {
-      alert(`Error al eliminar categoría: ${err.message}`);
-    }
+  const handleDeleteTicket = (ticketId: string, ticketName: string) => {
+    showConfirm({
+      title: `¿Retirar categoría "${ticketName}"?`,
+      message: `¿Estás seguro de eliminar o retirar la categoría "${ticketName}"? Si ya cuenta con órdenes registradas o boletos emitidos se desactivará de la venta pública para proteger los registros de asistencia.`,
+      confirmText: 'Retirar Entrada',
+      variant: 'danger',
+      onConfirm: async () => {
+        closeConfirm();
+        try {
+          const res = await api.deleteTicketType(ticketId);
+          showAlert(res.message || 'Categoría de entrada procesada exitosamente.', 'success', 'Entrada Actualizada');
+          await loadTicketTypes();
+          await loadData();
+        } catch (err: any) {
+          showAlert(`Error al eliminar categoría: ${err.message}`, 'error', 'Error en Entrada');
+        }
+      },
+    });
   };
 
   return (
@@ -1231,7 +1343,7 @@ export const AdminDashboardPage: React.FC = () => {
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteSpeaker(sp.id)}
+                        onClick={() => handleDeleteSpeaker(sp.id, sp.name)}
                         className="p-1.5 rounded-lg hover:bg-red-950/80 text-zinc-400 hover:text-red-400 transition-colors"
                         title="Eliminar"
                       >
@@ -2916,6 +3028,29 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
         </Modal>
       )}
+
+      {/* Modal de Confirmación Global de Acciones Críticas */}
+      <ConfirmModal
+        isOpen={confirmModalConfig.isOpen}
+        onClose={closeConfirm}
+        onConfirm={confirmModalConfig.onConfirm}
+        title={confirmModalConfig.title}
+        message={confirmModalConfig.message}
+        confirmText={confirmModalConfig.confirmText}
+        cancelText={confirmModalConfig.cancelText}
+        variant={confirmModalConfig.variant}
+        isLoading={confirmModalConfig.isLoading}
+      />
+
+      {/* Modal de Alerta / Notificación UI del Sistema */}
+      <AlertModal
+        isOpen={alertModalConfig.isOpen}
+        onClose={closeAlert}
+        title={alertModalConfig.title}
+        message={alertModalConfig.message}
+        type={alertModalConfig.type}
+        buttonText={alertModalConfig.buttonText}
+      />
     </div>
   );
 };
