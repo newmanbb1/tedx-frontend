@@ -4,6 +4,8 @@ import {
   ArrowRight,
   Zap,
   Award,
+  Maximize2,
+  X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EventData, SpeakerData, BackgroundImageData } from '../types/index.js';
@@ -18,28 +20,27 @@ interface LandingPageProps {
 
 const DEFAULT_SPEAKERS = [
   {
-    name: 'ERICK MITA',
-    role: 'Vicerrector USFX & Gestor Universitario',
-    topic: 'En la universidad no solo se debe formar profesionales, sino transformar vidas y contribuir al desarrollo de la sociedad.',
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
-    quote: 'En la universidad no solo se debe formar profesionales, sino transformar vidas y contribuir al desarrollo de la sociedad',
+    name: 'Erick Mita',
+    role: 'Speaker Oficial',
+    topic: 'TEDx USFX',
+    imageUrl: '/images/flyer-erick-mita.jpg',
   },
   {
     name: 'Carlos Mendoza',
-    role: 'Astrofísico & Divulgador Científico',
-    topic: 'De la Tierra al Cosmos: Nuevos horizontes en la exploración interplanetaria',
+    role: 'Speaker Oficial',
+    topic: 'Exploración e Innovación',
     imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
   },
   {
     name: 'Ing. Sofía Alarcón',
-    role: 'Fundadora de EcoSolutions',
-    topic: 'Biomateriales y economía circular contra la crisis climática',
+    role: 'Speaker Oficial',
+    topic: 'Sostenibilidad y Futuro',
     imageUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=80',
   },
   {
     name: 'Mateo Rivas',
-    role: 'Compositor & Diseñador Sonoro Inmersivo',
-    topic: 'El sonido como catalizador de la empatía colectiva',
+    role: 'Speaker Oficial',
+    topic: 'Creatividad y Nuevas Tecnologías',
     imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
   },
 ];
@@ -49,6 +50,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
   const [speakers, setSpeakers] = useState<Array<SpeakerData | typeof DEFAULT_SPEAKERS[0]>>(DEFAULT_SPEAKERS);
   const [bgImages, setBgImages] = useState<BackgroundImageData[]>([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
+  const [selectedFlyer, setSelectedFlyer] = useState<{ name: string; url: string } | null>(null);
 
   useEffect(() => {
     const fetchSpeakers = async () => {
@@ -224,71 +226,65 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
         </div>
       </section>
 
-      {/* Orador Destacado: Erick Mita (Diseño Poster) */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-3xl p-6 sm:p-10 relative overflow-hidden shadow-2xl"
-        >
-          <div className="absolute top-0 right-0 p-8 text-8xl font-black text-white/5 select-none pointer-events-none">
-            SPEAKER
+      {/* Sección de Oradores Oficiales (Diseño Afiches de Alto Impacto) */}
+      <section id="speakers" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
+        <div className="text-center space-y-4 mb-12 sm:mb-16">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ted-red uppercase tracking-widest bg-red-950/30 px-3.5 py-1.5 rounded-full border border-ted-red/20 shadow-sm">
+            <Sparkles className="w-4 h-4 text-ted-red" />
+            <span>Expositores Destacados</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div className="relative aspect-[4/5] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950">
-              <img
-                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"
-                alt="Erick Mita"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute bottom-4 left-4 bg-black/80 px-4 py-1 border border-zinc-700 text-xs font-bold text-ted-red tracking-wider">
-                SPEAKER TEDxUSFX 2026
-              </div>
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-3xl sm:text-5xl font-black text-white tracking-tight">ERICK MITA</h3>
-              <p className="text-ted-red font-semibold text-sm uppercase">Vicerrector USFX & Gestor Universitario</p>
-              <div className="p-4 bg-zinc-950/80 border-l-4 border-ted-red rounded-r-xl">
-                <p className="italic text-zinc-300 text-sm sm:text-base font-light">
-                  "En la universidad no solo se debe formar profesionales, sino transformar vidas y contribuir al desarrollo de la sociedad"
-                </p>
-              </div>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Docente, investigador y gestor universitario, Doctor en Ciencias de la Educación. Ha desempeñado importantes cargos académicos, destacándose por su liderazgo, producción científica y compromiso con la transformación de la educación superior.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Resto de Oradores */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center space-y-4 mb-16">
           <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-            Otros Conferencistas Invitados
+            Oradores Oficiales TEDx USFX
           </h2>
           <p className="text-zinc-400 max-w-2xl mx-auto text-sm sm:text-base">
-            Líderes que compartirán ideas transformadoras en el Teatro Gran Mariscal.
+            Conoce a los conferencistas que compartirán ideas transformadoras en el Teatro Gran Mariscal.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {speakers.slice(1).map((speaker, idx) => (
+        {/* Grid de Afiches de Speakers */}
+        <div className={`grid gap-6 sm:gap-8 ${
+          speakers.length === 1
+            ? 'max-w-md mx-auto grid-cols-1'
+            : speakers.length === 2
+            ? 'max-w-3xl mx-auto grid-cols-1 sm:grid-cols-2'
+            : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+        }`}>
+          {speakers.map((speaker, idx) => (
             <motion.div
-              key={idx}
-              whileHover={{ y: -8 }}
-              className="bg-zinc-900/60 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col"
+              key={(speaker as any).id || idx}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              whileHover={{ y: -6 }}
+              onClick={() => setSelectedFlyer({ name: speaker.name, url: speaker.imageUrl })}
+              className="group cursor-pointer bg-zinc-950 border border-zinc-800/90 hover:border-ted-red/60 rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 flex flex-col justify-between"
             >
-              <div className="aspect-[4/5] bg-zinc-950 overflow-hidden">
-                <img src={speaker.imageUrl} alt={speaker.name} className="w-full h-full object-cover" />
+              {/* Contenedor del Afiche Oficial (Formato Vertical Completo) */}
+              <div className="relative aspect-[4/5] bg-zinc-950 overflow-hidden flex items-center justify-center">
+                <img
+                  src={speaker.imageUrl}
+                  alt={speaker.name}
+                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-5">
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-white bg-ted-red/90 px-3.5 py-1.5 rounded-full backdrop-blur-sm shadow-lg">
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>Ver Afiche en Grande</span>
+                  </span>
+                </div>
               </div>
-              <div className="p-5 flex-1 flex flex-col justify-between">
+
+              {/* Pie de tarjeta con Nombre del Speaker */}
+              <div className="p-4 sm:p-5 bg-zinc-900/95 border-t border-zinc-800/80 flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-white">{speaker.name}</h3>
-                  <p className="text-xs text-ted-red mt-1 uppercase font-semibold">{speaker.role}</p>
-                  <p className="text-sm text-zinc-400 mt-2 italic line-clamp-2">"{speaker.topic}"</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight group-hover:text-ted-red transition-colors">
+                    {speaker.name}
+                  </h3>
+                  <p className="text-xs text-ted-red font-semibold uppercase tracking-wider mt-0.5">Speaker Oficial TEDx USFX</p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center text-zinc-400 group-hover:text-white group-hover:bg-ted-red transition-colors">
+                  <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
             </motion.div>
@@ -371,6 +367,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
           </div>
         )}
       </section>
+
+      {/* Lightbox / Modal para ver el afiche completo en alta resolución */}
+      <AnimatePresence>
+        {selectedFlyer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedFlyer(null)}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md p-4 flex items-center justify-center cursor-zoom-out"
+          >
+            <div
+              className="relative max-w-lg max-h-[92vh] bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-3.5 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-ted-red"></span>
+                  <span className="text-sm font-bold text-white truncate">{selectedFlyer.name} — Afiche Oficial</span>
+                </div>
+                <button
+                  onClick={() => setSelectedFlyer(null)}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="overflow-auto p-2 bg-black flex items-center justify-center">
+                <img
+                  src={selectedFlyer.url}
+                  alt={selectedFlyer.name}
+                  className="max-h-[82vh] w-auto object-contain rounded-lg shadow-xl"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

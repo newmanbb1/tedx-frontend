@@ -559,16 +559,16 @@ export const AdminDashboardPage: React.FC = () => {
     if (speaker) {
       setEditingSpeaker(speaker);
       setSpeakerFormName(speaker.name);
-      setSpeakerFormRole(speaker.role);
-      setSpeakerFormTopic(speaker.topic);
+      setSpeakerFormRole(speaker.role || 'Speaker Oficial');
+      setSpeakerFormTopic(speaker.topic || 'TEDx USFX');
       setSpeakerFormBio(speaker.bio || '');
       setSpeakerFormOrder(speaker.order);
       setSpeakerFormImageUrl(speaker.imageUrl);
     } else {
       setEditingSpeaker(null);
       setSpeakerFormName('');
-      setSpeakerFormRole('');
-      setSpeakerFormTopic('');
+      setSpeakerFormRole('Speaker Oficial');
+      setSpeakerFormTopic('TEDx USFX');
       setSpeakerFormBio('');
       setSpeakerFormOrder(speakers.length + 1);
       setSpeakerFormImageUrl('');
@@ -579,19 +579,23 @@ export const AdminDashboardPage: React.FC = () => {
 
   const handleSaveSpeaker = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!speakerFormName.trim()) {
+      alert('Por favor ingresa el nombre del orador');
+      return;
+    }
     setSpeakerLoading(true);
     try {
       const formData = new FormData();
-      formData.append('name', speakerFormName);
-      formData.append('role', speakerFormRole);
-      formData.append('topic', speakerFormTopic);
-      formData.append('bio', speakerFormBio);
+      formData.append('name', speakerFormName.trim());
+      formData.append('role', speakerFormRole.trim() || 'Speaker Oficial');
+      formData.append('topic', speakerFormTopic.trim() || 'TEDx USFX');
+      if (speakerFormBio.trim()) formData.append('bio', speakerFormBio.trim());
       formData.append('order', String(speakerFormOrder));
 
       if (speakerFormImage) {
         formData.append('image', speakerFormImage);
-      } else if (speakerFormImageUrl) {
-        formData.append('imageUrl', speakerFormImageUrl);
+      } else if (speakerFormImageUrl.trim()) {
+        formData.append('imageUrl', speakerFormImageUrl.trim());
       }
 
       if (editingSpeaker) {
@@ -1175,51 +1179,72 @@ export const AdminDashboardPage: React.FC = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {speakers.map((sp) => (
-              <div
-                key={sp.id}
-                className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow flex flex-col justify-between"
+          {speakers.length === 0 ? (
+            <div className="p-12 text-center border border-zinc-800/80 rounded-2xl bg-zinc-900/40 space-y-3">
+              <Users className="w-10 h-10 text-zinc-600 mx-auto" />
+              <p className="text-sm font-semibold text-zinc-300">No hay oradores registrados aún</p>
+              <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                Registra a los disertantes subiendo su afiche oficial y su nombre para que aparezcan en la portada de TEDx USFX.
+              </p>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => handleOpenSpeakerModal()}
+                leftIcon={<Plus className="w-4 h-4" />}
+                className="bg-ted-red hover:bg-red-700 text-white text-xs font-bold mt-2"
               >
-                <div>
-                  <div className="aspect-[4/5] bg-zinc-950 relative overflow-hidden">
-                    <img
-                      src={sp.imageUrl}
-                      alt={sp.name}
-                      className="w-full h-full object-cover object-center"
-                    />
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 text-xs font-mono text-zinc-300">
-                      Orden: {sp.order}
+                Añadir Primer Orador
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {speakers.map((sp) => (
+                <div
+                  key={sp.id}
+                  className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group hover:border-ted-red/50 transition-all duration-300"
+                >
+                  <div className="relative">
+                    {/* Afiche Oficial (Proporción Poster Vertical) */}
+                    <div className="aspect-[4/5] bg-zinc-950 relative overflow-hidden">
+                      <img
+                        src={sp.imageUrl}
+                        alt={sp.name}
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/85 backdrop-blur-sm border border-zinc-700/60 text-[11px] font-mono font-bold text-zinc-300">
+                        #{sp.order}
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 bg-gradient-to-t from-zinc-900 via-zinc-900 to-transparent">
+                      <h3 className="font-bold text-white text-base tracking-tight truncate">{sp.name}</h3>
+                      <p className="text-[11px] text-ted-red font-semibold uppercase tracking-wider mt-0.5">Afiche Oficial</p>
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-2">
-                    <h3 className="font-bold text-white text-base">{sp.name}</h3>
-                    <p className="text-xs font-semibold text-ted-red uppercase tracking-wider">{sp.role}</p>
-                    <p className="text-xs text-zinc-300 italic">"{sp.topic}"</p>
-                    {sp.bio && <p className="text-[11px] text-zinc-500 line-clamp-2 mt-1">{sp.bio}</p>}
+                  <div className="p-3 border-t border-zinc-800/80 bg-zinc-950/40 flex items-center justify-between">
+                    <span className="text-[10px] text-zinc-500 font-mono">ID: {sp.id.slice(0, 8)}...</span>
+                    <div className="flex items-center space-x-1.5">
+                      <button
+                        onClick={() => handleOpenSpeakerModal(sp)}
+                        className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                        title="Editar"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSpeaker(sp.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-950/80 text-zinc-400 hover:text-red-400 transition-colors"
+                        title="Eliminar"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <div className="p-4 pt-0 border-t border-zinc-800/80 flex items-center justify-end space-x-2 mt-2">
-                  <button
-                    onClick={() => handleOpenSpeakerModal(sp)}
-                    className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
-                    title="Editar"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteSpeaker(sp.id)}
-                    className="p-1.5 rounded hover:bg-red-950 text-zinc-400 hover:text-red-400 transition-colors"
-                    title="Eliminar"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -2449,83 +2474,84 @@ export const AdminDashboardPage: React.FC = () => {
         <Modal
           isOpen={speakerModalOpen}
           onClose={() => setSpeakerModalOpen(false)}
-          title={editingSpeaker ? 'Editar Orador' : 'Añadir Nuevo Orador'}
+          title={editingSpeaker ? 'Editar Orador / Afiche' : 'Añadir Nuevo Orador'}
         >
           <form onSubmit={handleSaveSpeaker} className="space-y-4 text-xs">
+            <div className="p-3 bg-red-950/25 border border-ted-red/30 rounded-xl text-zinc-300 space-y-1">
+              <p className="font-semibold text-white flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-ted-red"></span>
+                Tarjeta de Afiche Oficial
+              </p>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                Ingresa el nombre del orador y sube su afiche gráfico. La tarjeta en la web mostrará el arte oficial en alta definición con todo su contenido (tema, fecha y lugar).
+              </p>
+            </div>
+
             <div>
-              <label className="text-zinc-400 block mb-1">Nombre Completo *</label>
+              <label className="text-zinc-300 font-semibold block mb-1.5">Nombre del Orador *</label>
               <input
                 type="text"
                 required
                 value={speakerFormName}
                 onChange={(e) => setSpeakerFormName(e.target.value)}
-                placeholder="Ej. Dra. Camila Valenzuela"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-ted-red"
+                placeholder="Ej. Erick Mita"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:border-ted-red"
               />
             </div>
 
-            <div>
-              <label className="text-zinc-400 block mb-1">Cargo / Especialidad *</label>
-              <input
-                type="text"
-                required
-                value={speakerFormRole}
-                onChange={(e) => setSpeakerFormRole(e.target.value)}
-                placeholder="Ej. Investigadora en Inteligencia Artificial"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-ted-red"
-              />
-            </div>
+            <div className="space-y-2">
+              <label className="text-zinc-300 font-semibold block">Afiche Oficial / Imagen (Diseño Vertical)</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl">
+                  <label className="text-zinc-400 block text-[11px] mb-1.5">Subir Archivo de Imagen</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setSpeakerFormImage(e.target.files?.[0] || null)}
+                    className="w-full text-zinc-400 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-zinc-800 file:text-white file:hover:bg-zinc-700 cursor-pointer"
+                  />
+                  {speakerFormImage && (
+                    <p className="text-[10px] text-emerald-400 mt-1 font-mono truncate">
+                      ✓ Archivo: {speakerFormImage.name}
+                    </p>
+                  )}
+                </div>
 
-            <div>
-              <label className="text-zinc-400 block mb-1">Tema de la Conferencia *</label>
-              <input
-                type="text"
-                required
-                value={speakerFormTopic}
-                onChange={(e) => setSpeakerFormTopic(e.target.value)}
-                placeholder="Ej. El impacto ético de los modelos generativos"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-ted-red"
-              />
-            </div>
-
-            <div>
-              <label className="text-zinc-400 block mb-1">Biografía Breve</label>
-              <textarea
-                rows={2}
-                value={speakerFormBio}
-                onChange={(e) => setSpeakerFormBio(e.target.value)}
-                placeholder="Trayectoria y logros principales..."
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-ted-red"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-zinc-400 block mb-1">Subir Foto (Archivo)</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setSpeakerFormImage(e.target.files?.[0] || null)}
-                  className="w-full text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-zinc-800 file:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-zinc-400 block mb-1">O URL de Foto</label>
-                <input
-                  type="text"
-                  value={speakerFormImageUrl}
-                  onChange={(e) => setSpeakerFormImageUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-white focus:outline-none focus:border-ted-red"
-                />
+                <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl">
+                  <label className="text-zinc-400 block text-[11px] mb-1.5">O URL Directa del Afiche</label>
+                  <input
+                    type="text"
+                    value={speakerFormImageUrl}
+                    onChange={(e) => setSpeakerFormImageUrl(e.target.value)}
+                    placeholder="https://... o /images/..."
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-white text-xs focus:outline-none focus:border-ted-red"
+                  />
+                </div>
               </div>
             </div>
 
+            {/* Vista previa del afiche */}
+            {(speakerFormImage || speakerFormImageUrl || (editingSpeaker && editingSpeaker.imageUrl)) && (
+              <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center gap-4">
+                <div className="w-16 h-20 rounded-lg overflow-hidden bg-black border border-zinc-800 flex-shrink-0">
+                  <img
+                    src={speakerFormImage ? URL.createObjectURL(speakerFormImage) : (speakerFormImageUrl || editingSpeaker?.imageUrl)}
+                    alt="Preview Afiche"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="text-[11px] text-zinc-400 space-y-0.5">
+                  <p className="font-semibold text-white">Vista previa del afiche</p>
+                  <p className="text-[10px] text-zinc-500">Se lucirá tal cual como tarjeta de afiche en la portada.</p>
+                </div>
+              </div>
+            )}
+
             <div>
-              <label className="text-zinc-400 block mb-1">Orden de Presentación</label>
+              <label className="text-zinc-400 block mb-1">Orden de Presentación (opcional)</label>
               <input
                 type="number"
+                min={1}
                 value={speakerFormOrder}
                 onChange={(e) => setSpeakerFormOrder(Number(e.target.value))}
                 className="w-24 bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-white font-mono focus:outline-none focus:border-ted-red"
@@ -2541,9 +2567,9 @@ export const AdminDashboardPage: React.FC = () => {
                 size="sm"
                 type="submit"
                 disabled={speakerLoading}
-                className="bg-ted-red hover:bg-red-700 text-white"
+                className="bg-ted-red hover:bg-red-700 text-white font-bold"
               >
-                {speakerLoading ? 'Guardando...' : 'Guardar Orador'}
+                {speakerLoading ? 'Guardando...' : editingSpeaker ? 'Guardar Cambios' : 'Crear Orador'}
               </Button>
             </div>
           </form>
