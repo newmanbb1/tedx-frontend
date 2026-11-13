@@ -83,7 +83,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@tedx.local"
+                placeholder="Usuario"
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-ted-red"
               />
             </div>
@@ -100,7 +100,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Contraseña"
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-ted-red"
               />
             </div>
