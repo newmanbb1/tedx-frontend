@@ -172,17 +172,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
         </div>
       )}
 
-      {/* Fondo de patrón dinámico TEDx USFX */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03] select-none flex flex-wrap gap-12 font-black text-6xl tracking-widest text-red-600 overflow-hidden -z-10 leading-none">
-        {Array.from({ length: 40 }).map((_, i) => (
-          <span key={i}>TEDxUSFX</span>
-        ))}
-      </div>
+      {/* Hero Section con Fondo Patrón Colonial y Jalq'a Fusionado */}
+      <section className="relative min-h-[92vh] flex items-center justify-center pt-8 sm:pt-16 overflow-hidden">
+        {/* Fondo con Patrón Colonial y Jalq'a Fusionado (Identidad Oficial) */}
+        <div className="absolute inset-0 pattern-jalka-transparent opacity-30 pointer-events-none" />
 
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center pt-8 sm:pt-16">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(235,0,40,0.18)_0%,_transparent_70%)] pointer-events-none" />
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[300px] bg-ted-red/15 blur-[120px] pointer-events-none rounded-full" />
+        {/* Viñeta radial y resplandor atmosférico TEDx para legibilidad y elegancia */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(218,10,44,0.22)_0%,_rgba(10,10,10,0.82)_65%,_#0A0A0A_100%)] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[650px] h-[350px] bg-ted-red/20 blur-[130px] pointer-events-none rounded-full" />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 sm:space-y-8 z-10">
           <motion.div
@@ -265,41 +262,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
             )}
           </motion.div>
         </div>
-      </section>
-
-      {/* Franja de Identidad Cultural TEDx USFX: Pasado y Cultura */}
-      <section className="relative w-full overflow-hidden bg-gradient-to-r from-zinc-950 via-zinc-900/95 to-zinc-950 border-y border-zinc-800/80 shadow-2xl">
-        {/* Marca de agua de fondo con patrón Jalq'a y Colonial */}
-        <div className="absolute inset-0 pattern-jalka-transparent opacity-10 pointer-events-none" />
-
-        {/* Cinta Lanyard Superior en la franja */}
-        <div className="w-full h-3 sm:h-3.5 pattern-lanyard-ribbon border-b border-ted-red/30" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-1.5 text-center md:text-left">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ted-red uppercase tracking-widest">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Identidad Visual TEDx USFX 2026</span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
-              Patrón Colonial y Jalq'a Fusionado: Pasado y Cultura
-            </h3>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl font-light leading-relaxed">
-              La herencia arquitectónica barroca de la Ciudad Blanca de Sucre entrelazada con el arte textil milenario de los Jalq'a de Chuquisaca para proyectar ideas al futuro.
-            </p>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-ted-red/30 shadow-2xl shrink-0 bg-black">
-            <img
-              src="/patron-colonial-jalka.png"
-              alt="Patrón Colonial y Jalq'a Fusionado"
-              className="h-14 sm:h-20 w-auto object-cover"
-            />
-          </div>
-        </div>
-
-        {/* Cinta Lanyard Inferior en la franja */}
-        <div className="w-full h-2.5 pattern-lanyard-ribbon border-t border-ted-red/20 opacity-80" />
       </section>
 
       {/* Sección de Oradores Oficiales (Diseño Afiches de Alto Impacto) */}

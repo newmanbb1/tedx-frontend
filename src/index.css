@@ -59,8 +59,14 @@
 }
 
 .pattern-jalka-transparent {
-  background-image: url('/patron-colonial-jalka-transparent.png');
+  background-image: url('/patron-colonial-jalka-transparent2d.png');
   background-repeat: repeat;
-  background-size: 250px auto;
+  background-size: 260px auto;
+}
+
+.pattern-jalka-tile {
+  background-image: url('/patron-colonial-jalka-tile2d.png');
+  background-repeat: repeat;
+  background-size: 260px auto;
 }
 
