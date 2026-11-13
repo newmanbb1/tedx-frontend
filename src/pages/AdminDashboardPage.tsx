@@ -125,7 +125,6 @@ export const AdminDashboardPage: React.FC = () => {
   const [ticketFormName, setTicketFormName] = useState('');
   const [ticketFormDescription, setTicketFormDescription] = useState('');
   const [ticketFormPrice, setTicketFormPrice] = useState<number | ''>('');
-  const [ticketFormQuota, setTicketFormQuota] = useState<number | ''>('');
   const [ticketFormActive, setTicketFormActive] = useState(true);
   const [ticketActionLoading, setTicketActionLoading] = useState(false);
   const [ticketActionError, setTicketActionError] = useState<string | null>(null);
@@ -184,10 +183,16 @@ export const AdminDashboardPage: React.FC = () => {
 
   const loadTicketTypes = async () => {
     try {
-      const res = await api.getPublicEvent();
-      setTicketTypes(res.event.ticketTypes);
+      const res = await api.getTicketTypes();
+      setTicketTypes(res.ticketTypes);
     } catch (err) {
-      console.error('Error cargando tickets:', err);
+      console.error('Error cargando tickets de admin:', err);
+      try {
+        const fallback = await api.getPublicEvent();
+        setTicketTypes(fallback.event.ticketTypes);
+      } catch (e) {
+        console.error('Error cargando tickets:', e);
+      }
     }
   };
 
@@ -682,14 +687,12 @@ export const AdminDashboardPage: React.FC = () => {
       setTicketFormName(ticket.name);
       setTicketFormDescription(ticket.description || '');
       setTicketFormPrice(ticket.price);
-      setTicketFormQuota(ticket.totalQuota);
       setTicketFormActive(ticket.isActive);
     } else {
       setEditingTicket(null);
       setTicketFormName('');
       setTicketFormDescription('');
       setTicketFormPrice('');
-      setTicketFormQuota('');
       setTicketFormActive(true);
     }
     setTicketActionError(null);
@@ -702,12 +705,8 @@ export const AdminDashboardPage: React.FC = () => {
       setTicketActionError('El nombre de la entrada es obligatorio');
       return;
     }
-    if (ticketFormPrice === '' || Number(ticketFormPrice) < 0) {
-      setTicketActionError('Ingresa una tarifa válida en Bolivianos (Bs)');
-      return;
-    }
-    if (!ticketFormQuota || Number(ticketFormQuota) <= 0) {
-      setTicketActionError('Ingresa un cupo total de entradas mayor a 0');
+    if (ticketFormPrice === '' || isNaN(Number(ticketFormPrice)) || Number(ticketFormPrice) < 0) {
+      setTicketActionError('Ingresa un precio válido en Bolivianos (Bs)');
       return;
     }
 
@@ -719,7 +718,6 @@ export const AdminDashboardPage: React.FC = () => {
           name: ticketFormName.trim(),
           description: ticketFormDescription.trim() || undefined,
           price: Number(ticketFormPrice),
-          totalQuota: Number(ticketFormQuota),
           isActive: ticketFormActive,
         });
       } else {
@@ -727,7 +725,7 @@ export const AdminDashboardPage: React.FC = () => {
           name: ticketFormName.trim(),
           description: ticketFormDescription.trim() || undefined,
           price: Number(ticketFormPrice),
-          totalQuota: Number(ticketFormQuota),
+          totalQuota: 500,
         });
       }
       setTicketModalOpen(false);
@@ -1369,24 +1367,25 @@ export const AdminDashboardPage: React.FC = () => {
                       )}
                     </div>
 
-                    <p className="text-xs text-zinc-400 min-h-[36px] line-clamp-2">
-                      {tt.description || 'Sin descripción adicional.'}
-                    </p>
+                    {tt.description && (
+                      <p className="text-xs text-zinc-400 line-clamp-2">
+                        {tt.description}
+                      </p>
+                    )}
 
-                    <div className="pt-3 border-t border-zinc-800/80 grid grid-cols-2 gap-2 text-xs">
-                      <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60">
-                        <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Tarifa Oficial</span>
-                        <span className="text-xl font-black text-emerald-400 font-mono">
-                          Bs {tt.price.toFixed(2)}
-                        </span>
-                      </div>
-
-                      <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60">
-                        <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Cupos Disponibles</span>
-                        <span className="text-sm font-bold text-white font-mono block">
-                          {tt.remainingQuota} / {tt.totalQuota}
-                        </span>
-                        <span className="text-[10px] text-zinc-500 font-mono">({soldCount} vendidas)</span>
+                    <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs">
+                      <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 flex-1 flex items-baseline justify-between">
+                        <div>
+                          <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Precio Oficial</span>
+                          <span className="text-2xl font-black text-emerald-400 font-mono">
+                            Bs {tt.price.toFixed(2)}
+                          </span>
+                        </div>
+                        {soldCount > 0 && (
+                          <span className="text-[11px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-800">
+                            {soldCount} {soldCount === 1 ? 'vendida' : 'vendidas'}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -2356,7 +2355,7 @@ export const AdminDashboardPage: React.FC = () => {
         <Modal
           isOpen={ticketModalOpen}
           onClose={() => setTicketModalOpen(false)}
-          title={editingTicket ? `Editar Entrada: ${editingTicket.name}` : 'Nueva Categoría de Entrada y Tarifa Oficial'}
+          title={editingTicket ? `Editar Entrada: ${editingTicket.name}` : 'Nueva Entrada / Tarifa Oficial'}
         >
           <form onSubmit={handleSaveTicket} className="space-y-4 text-xs">
             {ticketActionError && (
@@ -2367,72 +2366,42 @@ export const AdminDashboardPage: React.FC = () => {
             )}
 
             <div>
-              <label className="text-zinc-300 font-semibold block mb-1 uppercase tracking-wider text-[11px]">
-                Nombre de la Entrada / Categoría *
+              <label className="text-zinc-300 font-semibold block mb-1.5 uppercase tracking-wider text-[11px]">
+                Nombre de la Entrada *
               </label>
               <input
                 type="text"
                 required
                 value={ticketFormName}
                 onChange={(e) => setTicketFormName(e.target.value)}
-                placeholder="Ej. General, Estudiantes USFX, VIP Lounge, Pase Corporativo..."
+                placeholder="Ej. General, Estudiantes USFX, VIP..."
                 className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-ted-red"
               />
             </div>
 
             <div>
-              <label className="text-zinc-300 font-semibold block mb-1 uppercase tracking-wider text-[11px]">
-                Descripción y Beneficios (Opcional)
+              <label className="text-zinc-300 font-semibold block mb-1.5 uppercase tracking-wider text-[11px]">
+                Precio en Bolivianos (Bs) *
               </label>
-              <textarea
-                rows={3}
-                value={ticketFormDescription}
-                onChange={(e) => setTicketFormDescription(e.target.value)}
-                placeholder="Ej. Acceso completo al auditorio, coffee break oficial, kit de bienvenida y credencial oficial con QR..."
-                className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-ted-red resize-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-zinc-300 font-semibold block mb-1 uppercase tracking-wider text-[11px]">
-                  Tarifa Oficial en Bolivianos (Bs) *
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-mono font-bold text-xs">
-                    Bs
-                  </span>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    required
-                    value={ticketFormPrice}
-                    onChange={(e) => setTicketFormPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="50.00"
-                    className="w-full bg-zinc-950 border border-zinc-700 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-ted-red"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-zinc-300 font-semibold block mb-1 uppercase tracking-wider text-[11px]">
-                  Cupo Total de Entradas *
-                </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-mono font-bold text-xs">
+                  Bs
+                </span>
                 <input
                   type="number"
-                  min="1"
+                  step="0.5"
+                  min="0"
                   required
-                  value={ticketFormQuota}
-                  onChange={(e) => setTicketFormQuota(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder="100"
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-ted-red"
+                  value={ticketFormPrice}
+                  onChange={(e) => setTicketFormPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder="50"
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-ted-red"
                 />
               </div>
             </div>
 
             {editingTicket && (
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-center gap-2 pt-2 border-t border-zinc-800">
                 <input
                   type="checkbox"
                   id="ticketActive"
@@ -2441,7 +2410,7 @@ export const AdminDashboardPage: React.FC = () => {
                   className="w-4 h-4 rounded bg-zinc-950 border-zinc-700 text-ted-red focus:ring-ted-red"
                 />
                 <label htmlFor="ticketActive" className="text-xs text-zinc-300 cursor-pointer">
-                  Categoría activa para la venta pública en la Landing Page
+                  Entrada activa y visible para compra en la Landing Page
                 </label>
               </div>
             )}

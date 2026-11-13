@@ -229,11 +229,18 @@ export const api = {
     return handleResponse(res);
   },
 
+  async getTicketTypes(): Promise<{ ticketTypes: TicketTypeData[] }> {
+    const res = await fetch(`${API_BASE}/admin/ticket-types`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(res);
+  },
+
   async createTicketType(data: {
     name: string;
     description?: string;
     price: number;
-    totalQuota: number;
+    totalQuota?: number;
     eventId?: string;
   }): Promise<{ message: string; ticketType: TicketTypeData }> {
     const res = await fetch(`${API_BASE}/admin/ticket-types`, {
