@@ -173,10 +173,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex md:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors focus:outline-none"
+              className="p-2 -mr-2 text-zinc-400 hover:text-white active:scale-95 transition-all focus:outline-none"
               aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             >
-              {mobileMenuOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6 text-ted-red hover:text-white transition-colors" />
+              ) : (
+                <Menu className="w-6 h-6 text-zinc-200" />
+              )}
             </button>
           </div>
         </div>
