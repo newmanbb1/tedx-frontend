@@ -120,9 +120,15 @@ export const AdminDashboardPage: React.FC = () => {
 
   // Pestaña Tickets y Precios en Bs
   const [ticketTypes, setTicketTypes] = useState<TicketTypeData[]>([]);
+  const [ticketModalOpen, setTicketModalOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<TicketTypeData | null>(null);
-  const [ticketPriceInput, setTicketPriceInput] = useState<number>(0);
-  const [ticketQuotaInput, setTicketQuotaInput] = useState<number>(0);
+  const [ticketFormName, setTicketFormName] = useState('');
+  const [ticketFormDescription, setTicketFormDescription] = useState('');
+  const [ticketFormPrice, setTicketFormPrice] = useState<number | ''>('');
+  const [ticketFormQuota, setTicketFormQuota] = useState<number | ''>('');
+  const [ticketFormActive, setTicketFormActive] = useState(true);
+  const [ticketActionLoading, setTicketActionLoading] = useState(false);
+  const [ticketActionError, setTicketActionError] = useState<string | null>(null);
 
   // Pestaña Configuración de Pago QR Oficial
   const [paymentSetting, setPaymentSetting] = useState<PaymentSettingData | null>(null);
@@ -666,17 +672,81 @@ export const AdminDashboardPage: React.FC = () => {
   // =====================
   // Acciones Tickets en Bs
   // =====================
-  const handleSaveTicketPrice = async (ticketId: string) => {
-    try {
-      await api.updateTicketType(ticketId, {
-        price: Number(ticketPriceInput),
-        totalQuota: Number(ticketQuotaInput),
-      });
+  const handleOpenTicketModal = (ticket?: TicketTypeData) => {
+    if (ticket) {
+      setEditingTicket(ticket);
+      setTicketFormName(ticket.name);
+      setTicketFormDescription(ticket.description || '');
+      setTicketFormPrice(ticket.price);
+      setTicketFormQuota(ticket.totalQuota);
+      setTicketFormActive(ticket.isActive);
+    } else {
       setEditingTicket(null);
+      setTicketFormName('');
+      setTicketFormDescription('');
+      setTicketFormPrice('');
+      setTicketFormQuota('');
+      setTicketFormActive(true);
+    }
+    setTicketActionError(null);
+    setTicketModalOpen(true);
+  };
+
+  const handleSaveTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ticketFormName.trim()) {
+      setTicketActionError('El nombre de la entrada es obligatorio');
+      return;
+    }
+    if (ticketFormPrice === '' || Number(ticketFormPrice) < 0) {
+      setTicketActionError('Ingresa una tarifa válida en Bolivianos (Bs)');
+      return;
+    }
+    if (!ticketFormQuota || Number(ticketFormQuota) <= 0) {
+      setTicketActionError('Ingresa un cupo total de entradas mayor a 0');
+      return;
+    }
+
+    setTicketActionLoading(true);
+    setTicketActionError(null);
+    try {
+      if (editingTicket) {
+        await api.updateTicketType(editingTicket.id, {
+          name: ticketFormName.trim(),
+          description: ticketFormDescription.trim() || undefined,
+          price: Number(ticketFormPrice),
+          totalQuota: Number(ticketFormQuota),
+          isActive: ticketFormActive,
+        });
+      } else {
+        await api.createTicketType({
+          name: ticketFormName.trim(),
+          description: ticketFormDescription.trim() || undefined,
+          price: Number(ticketFormPrice),
+          totalQuota: Number(ticketFormQuota),
+        });
+      }
+      setTicketModalOpen(false);
       await loadTicketTypes();
       await loadData();
     } catch (err: any) {
-      alert(`Error al actualizar precio: ${err.message}`);
+      setTicketActionError(err.message || 'Error al guardar la categoría de entrada');
+    } finally {
+      setTicketActionLoading(false);
+    }
+  };
+
+  const handleDeleteTicket = async (ticketId: string, ticketName: string) => {
+    if (!window.confirm(`¿Estás seguro de eliminar o retirar la categoría "${ticketName}"?`)) {
+      return;
+    }
+    try {
+      const res = await api.deleteTicketType(ticketId);
+      alert(res.message);
+      await loadTicketTypes();
+      await loadData();
+    } catch (err: any) {
+      alert(`Error al eliminar categoría: ${err.message}`);
     }
   };
 
@@ -1224,107 +1294,97 @@ export const AdminDashboardPage: React.FC = () => {
       {/* PESTAÑA 4: ENTRADAS Y PRECIOS EN BOLIVIANOS (Bs) */}
       {activeAdminTab === 'tickets' && (
         <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-              <Ticket className="w-5 h-5 text-ted-red" />
-              <span>Categorías de Entradas y Tarifas Oficiales (Bs)</span>
-            </h2>
-            <p className="text-xs text-zinc-400 mt-1">
-              Ajusta los precios en moneda nacional boliviana (Bs) y los cupos de aforo para cada categoría.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                <Ticket className="w-5 h-5 text-ted-red" />
+                <span>Categorías de Entradas y Tarifas Oficiales (Bs)</span>
+              </h2>
+              <p className="text-xs text-zinc-400 mt-1">
+                Crea nuevas categorías de boletos, define sus precios en Bolivianos (Bs) y gestiona los cupos de aforo.
+              </p>
+            </div>
+
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => handleOpenTicketModal()}
+              leftIcon={<Plus className="w-4 h-4" />}
+              className="bg-ted-red hover:bg-red-700 text-white text-xs font-bold shrink-0 shadow-lg shadow-ted-red/20"
+            >
+              Nueva Entrada / Tarifa
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {ticketTypes.map((tt) => {
-              const isEditing = editingTicket?.id === tt.id;
+              const isSoldOut = tt.remainingQuota <= 0;
+              const soldCount = Math.max(0, tt.totalQuota - tt.remainingQuota);
 
               return (
                 <div
                   key={tt.id}
-                  className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl space-y-4"
+                  className="bg-zinc-900 border border-zinc-800 p-5 sm:p-6 rounded-2xl shadow-xl space-y-4 flex flex-col justify-between"
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-black text-white">{tt.name}</h3>
-                    {tt.remainingQuota <= 0 && (
-                      <Badge variant="danger">Agotado</Badge>
-                    )}
-                  </div>
-
-                  <p className="text-xs text-zinc-400 min-h-[40px]">{tt.description}</p>
-
-                  <div className="pt-4 border-t border-zinc-800 space-y-3">
-                    <div>
-                      <span className="text-xs text-zinc-500 block">Tarifa Oficial:</span>
-                      {isEditing ? (
-                        <div className="flex items-center space-x-2 mt-1">
-                          <span className="text-zinc-400 text-sm font-bold font-mono">Bs</span>
-                          <input
-                            type="number"
-                            value={ticketPriceInput}
-                            onChange={(e) => setTicketPriceInput(Number(e.target.value))}
-                            className="bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono w-28 focus:outline-none focus:border-ted-red"
-                          />
-                        </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-lg font-black text-white truncate">{tt.name}</h3>
+                      {!tt.isActive ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-800 text-zinc-400 border border-zinc-700 uppercase">
+                          Inactivo
+                        </span>
+                      ) : isSoldOut ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-800 uppercase">
+                          Agotado
+                        </span>
                       ) : (
-                        <span className="text-2xl font-black text-white font-mono">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 uppercase">
+                          Activo
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-zinc-400 min-h-[36px] line-clamp-2">
+                      {tt.description || 'Sin descripción adicional.'}
+                    </p>
+
+                    <div className="pt-3 border-t border-zinc-800/80 grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60">
+                        <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Tarifa Oficial</span>
+                        <span className="text-xl font-black text-emerald-400 font-mono">
                           Bs {tt.price.toFixed(2)}
                         </span>
-                      )}
-                    </div>
+                      </div>
 
-                    <div>
-                      <span className="text-xs text-zinc-500 block">Cupo Total:</span>
-                      {isEditing ? (
-                        <input
-                          type="number"
-                          value={ticketQuotaInput}
-                          onChange={(e) => setTicketQuotaInput(Number(e.target.value))}
-                          className="bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono w-28 mt-1 focus:outline-none focus:border-ted-red"
-                        />
-                      ) : (
-                        <span className="text-sm font-mono text-zinc-300">
-                          {tt.totalQuota} entradas totales
+                      <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60">
+                        <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Cupos Disponibles</span>
+                        <span className="text-sm font-bold text-white font-mono block">
+                          {tt.remainingQuota} / {tt.totalQuota}
                         </span>
-                      )}
+                        <span className="text-[10px] text-zinc-500 font-mono">({soldCount} vendidas)</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-zinc-800 flex justify-end">
-                    {isEditing ? (
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingTicket(null)}
-                          className="text-xs"
-                        >
-                          Cancelar
-                        </Button>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleSaveTicketPrice(tt.id)}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs flex items-center space-x-1"
-                        >
-                          <Save className="w-3.5 h-3.5 mr-1" />
-                          <span>Guardar</span>
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingTicket(tt);
-                          setTicketPriceInput(tt.price);
-                          setTicketQuotaInput(tt.totalQuota);
-                        }}
-                        className="text-xs border-zinc-700 text-zinc-300"
-                      >
-                        <Edit2 className="w-3.5 h-3.5 mr-1" />
-                        Editar Precio y Cupo
-                      </Button>
-                    )}
+                  <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenTicketModal(tt)}
+                      leftIcon={<Edit2 className="w-3.5 h-3.5" />}
+                      className="text-xs border-zinc-700 text-zinc-300 hover:text-white"
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteTicket(tt.id, tt.name)}
+                      leftIcon={<Trash2 className="w-3.5 h-3.5 text-rose-400" />}
+                      className="text-xs border-zinc-800 hover:border-rose-900 text-zinc-400 hover:text-rose-400"
+                    >
+                      Eliminar
+                    </Button>
                   </div>
                 </div>
               );
@@ -2264,6 +2324,124 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* MODAL: Crear / Editar Categoría de Entrada */}
+      {ticketModalOpen && (
+        <Modal
+          isOpen={ticketModalOpen}
+          onClose={() => setTicketModalOpen(false)}
+          title={editingTicket ? `Editar Entrada: ${editingTicket.name}` : 'Nueva Categoría de Entrada y Tarifa Oficial'}
+        >
+          <form onSubmit={handleSaveTicket} className="space-y-4 text-xs">
+            {ticketActionError && (
+              <div className="p-3 bg-red-950/80 border border-red-800 rounded-xl text-red-200 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{ticketActionError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="text-zinc-300 font-semibold block mb-1 uppercase tracking-wider text-[11px]">
+                Nombre de la Entrada / Categoría *
+              </label>
+              <input
+                type="text"
+                required
+                value={ticketFormName}
+                onChange={(e) => setTicketFormName(e.target.value)}
+                placeholder="Ej. General, Estudiantes USFX, VIP Lounge, Pase Corporativo..."
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-ted-red"
+              />
+            </div>
+
+            <div>
+              <label className="text-zinc-300 font-semibold block mb-1 uppercase tracking-wider text-[11px]">
+                Descripción y Beneficios (Opcional)
+              </label>
+              <textarea
+                rows={3}
+                value={ticketFormDescription}
+                onChange={(e) => setTicketFormDescription(e.target.value)}
+                placeholder="Ej. Acceso completo al auditorio, coffee break oficial, kit de bienvenida y credencial oficial con QR..."
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-ted-red resize-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-zinc-300 font-semibold block mb-1 uppercase tracking-wider text-[11px]">
+                  Tarifa Oficial en Bolivianos (Bs) *
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-mono font-bold text-xs">
+                    Bs
+                  </span>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    required
+                    value={ticketFormPrice}
+                    onChange={(e) => setTicketFormPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="50.00"
+                    className="w-full bg-zinc-950 border border-zinc-700 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-ted-red"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-zinc-300 font-semibold block mb-1 uppercase tracking-wider text-[11px]">
+                  Cupo Total de Entradas *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={ticketFormQuota}
+                  onChange={(e) => setTicketFormQuota(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder="100"
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-ted-red"
+                />
+              </div>
+            </div>
+
+            {editingTicket && (
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="ticketActive"
+                  checked={ticketFormActive}
+                  onChange={(e) => setTicketFormActive(e.target.checked)}
+                  className="w-4 h-4 rounded bg-zinc-950 border-zinc-700 text-ted-red focus:ring-ted-red"
+                />
+                <label htmlFor="ticketActive" className="text-xs text-zinc-300 cursor-pointer">
+                  Categoría activa para la venta pública en la Landing Page
+                </label>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setTicketModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                isLoading={ticketActionLoading}
+                className="bg-ted-red hover:bg-red-700 text-white font-bold"
+              >
+                {editingTicket ? 'Guardar Cambios' : 'Crear Entrada'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {/* MODAL: Crear/Editar Speaker */}

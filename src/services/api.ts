@@ -229,6 +229,24 @@ export const api = {
     return handleResponse(res);
   },
 
+  async createTicketType(data: {
+    name: string;
+    description?: string;
+    price: number;
+    totalQuota: number;
+    eventId?: string;
+  }): Promise<{ message: string; ticketType: TicketTypeData }> {
+    const res = await fetch(`${API_BASE}/admin/ticket-types`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
   async updateTicketType(
     id: string,
     data: Partial<TicketTypeData>
@@ -240,6 +258,18 @@ export const api = {
         ...getAuthHeader(),
       },
       body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async deleteTicketType(
+    id: string
+  ): Promise<{ message: string; softDeleted?: boolean }> {
+    const res = await fetch(`${API_BASE}/admin/ticket-types/${id}`, {
+      method: 'DELETE',
+      headers: {
+        ...getAuthHeader(),
+      },
     });
     return handleResponse(res);
   },
