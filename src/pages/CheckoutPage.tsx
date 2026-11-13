@@ -264,8 +264,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Top Back Navigation */}
-      <div className="flex items-center justify-between mb-8">
+      {/* Top Back Navigation (Responsive Mobile-First) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
         <button
           onClick={() => {
             if (step === 2) {
@@ -274,17 +274,17 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               onBack();
             }
           }}
-          className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm text-zinc-400 hover:text-white transition-colors self-start"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>{step === 2 ? 'Regresar a datos del comprador' : 'Volver a selección de entradas'}</span>
+          <span>{step === 2 ? 'Regresar a datos del comprador' : 'Volver a entradas'}</span>
         </button>
 
         {/* Step Indicator */}
-        <div className="flex items-center gap-2 text-xs font-semibold">
+        <div className="flex items-center gap-2 text-xs font-semibold self-start sm:self-auto">
           <span
             className={`px-3 py-1 rounded-full ${
-              step === 1 ? 'bg-ted-red text-white' : 'bg-zinc-800 text-zinc-400'
+              step === 1 ? 'bg-ted-red text-white shadow-md shadow-ted-red/20' : 'bg-zinc-800 text-zinc-400'
             }`}
           >
             1. Tus Datos
@@ -292,7 +292,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
           <span className="text-zinc-600">→</span>
           <span
             className={`px-3 py-1 rounded-full ${
-              step === 2 ? 'bg-ted-red text-white' : 'bg-zinc-800 text-zinc-400'
+              step === 2 ? 'bg-ted-red text-white shadow-md shadow-ted-red/20' : 'bg-zinc-800 text-zinc-400'
             }`}
           >
             2. Pago QR Oficial

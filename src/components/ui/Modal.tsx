@@ -43,7 +43,7 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         className="fixed inset-0"
         onClick={onClose}
@@ -52,21 +52,26 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative w-full ${maxWidthStyles[maxWidth]} bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-10`}
+        className={`relative w-full ${maxWidthStyles[maxWidth]} bg-zinc-900 border-t sm:border border-zinc-800 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden z-10 max-h-[92vh] sm:max-h-[85vh] flex flex-col`}
       >
+        {/* Indicador de arrastre táctil para móviles */}
+        <div className="sm:hidden pt-3 pb-1 flex justify-center">
+          <div className="w-12 h-1 bg-zinc-700 rounded-full" />
+        </div>
+
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
-            <h3 className="text-lg font-semibold text-white tracking-tight">{title}</h3>
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-800 shrink-0">
+            <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">{title}</h3>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
               aria-label="Cerrar modal"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         )}
-        <div className="p-6 max-h-[85vh] overflow-y-auto">{children}</div>
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );

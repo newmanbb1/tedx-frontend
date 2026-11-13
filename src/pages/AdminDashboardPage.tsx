@@ -693,151 +693,153 @@ export const AdminDashboardPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Pestañas de Navegación del Admin */}
-        <div className="flex bg-zinc-900 p-1 rounded-xl border border-zinc-800 self-start sm:self-auto overflow-x-auto max-w-full">
-          <button
-            onClick={() => setActiveAdminTab('orders')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
-              activeAdminTab === 'orders' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <DollarSign className="w-4 h-4" />
-            <span>Órdenes y Validaciones</span>
-          </button>
+        {/* Pestañas de Navegación del Admin (Mobile-First Touch Swipeable) */}
+        <div className="w-full overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 pt-2">
+          <div className="inline-flex min-w-max bg-zinc-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-zinc-800 gap-1.5">
+            <button
+              onClick={() => setActiveAdminTab('orders')}
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+                activeAdminTab === 'orders' ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <DollarSign className="w-4 h-4" />
+              <span>Órdenes y Validaciones</span>
+            </button>
 
-          <button
-            onClick={() => setActiveAdminTab('speakers')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
-              activeAdminTab === 'speakers' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Speakers Oficiales</span>
-          </button>
+            <button
+              onClick={() => setActiveAdminTab('speakers')}
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+                activeAdminTab === 'speakers' ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Speakers Oficiales</span>
+            </button>
 
-          <button
-            onClick={() => setActiveAdminTab('certificates')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
-              activeAdminTab === 'certificates' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Award className="w-4 h-4" />
-            <span>Plantillas de Certificados</span>
-          </button>
+            <button
+              onClick={() => setActiveAdminTab('certificates')}
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+                activeAdminTab === 'certificates' ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Award className="w-4 h-4" />
+              <span>Plantillas de Certificados</span>
+            </button>
 
-          <button
-            onClick={() => setActiveAdminTab('tickets')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
-              activeAdminTab === 'tickets' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Ticket className="w-4 h-4" />
-            <span>Entradas y Precios (Bs)</span>
-          </button>
+            <button
+              onClick={() => setActiveAdminTab('tickets')}
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+                activeAdminTab === 'tickets' ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Ticket className="w-4 h-4" />
+              <span>Entradas y Precios (Bs)</span>
+            </button>
 
-          <button
-            onClick={() => setActiveAdminTab('payment')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
-              activeAdminTab === 'payment' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <QrCode className="w-4 h-4" />
-            <span>Configuración Pago QR</span>
-          </button>
+            <button
+              onClick={() => setActiveAdminTab('payment')}
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+                activeAdminTab === 'payment' ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <QrCode className="w-4 h-4" />
+              <span>Configuración Pago QR</span>
+            </button>
 
-          <button
-            onClick={() => setActiveAdminTab('backgrounds')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
-              activeAdminTab === 'backgrounds' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Image className="w-4 h-4" />
-            <span>Imágenes de Fondo</span>
-          </button>
+            <button
+              onClick={() => setActiveAdminTab('backgrounds')}
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+                activeAdminTab === 'backgrounds' ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <Image className="w-4 h-4" />
+              <span>Imágenes de Fondo</span>
+            </button>
 
-          <button
-            onClick={() => setActiveAdminTab('whatsapp')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
-              activeAdminTab === 'whatsapp' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <MessageCircle className="w-4 h-4 text-emerald-400" />
-            <span>WhatsApp API (Evolution)</span>
-            {waStatus && (
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  waStatus.state === 'open'
-                    ? 'bg-emerald-400 animate-pulse'
-                    : waStatus.state === 'connecting'
-                    ? 'bg-amber-400 animate-ping'
-                    : 'bg-rose-500'
-                }`}
-              />
-            )}
-          </button>
+            <button
+              onClick={() => setActiveAdminTab('whatsapp')}
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 whitespace-nowrap ${
+                activeAdminTab === 'whatsapp' ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+            >
+              <MessageCircle className="w-4 h-4 text-emerald-400" />
+              <span>WhatsApp API (Evolution)</span>
+              {waStatus && (
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    waStatus.state === 'open'
+                      ? 'bg-emerald-400 animate-pulse'
+                      : waStatus.state === 'connecting'
+                      ? 'bg-amber-400 animate-ping'
+                      : 'bg-rose-500'
+                  }`}
+                />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* PESTAÑA 1: ÓRDENES Y VALIDACIONES */}
       {activeAdminTab === 'orders' && (
         <div className="space-y-8">
-          {/* Métricas Generales */}
+          {/* Métricas Generales (Mobile-First 2 col -> 4 col) */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-              <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 space-y-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+              <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between text-zinc-400">
-                  <span className="text-xs font-semibold uppercase tracking-wider">Recaudación Total</span>
-                  <DollarSign className="w-4 h-4 text-emerald-400" />
+                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">Recaudación</span>
+                  <DollarSign className="w-4 h-4 text-emerald-400 shrink-0" />
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-white font-mono">
+                <p className="text-xl sm:text-3xl font-black text-white font-mono truncate">
                   Bs {stats.totalRevenue.toFixed(2)}
                 </p>
-                <p className="text-[11px] text-zinc-400">
+                <p className="text-[10px] sm:text-[11px] text-zinc-400">
                   {stats.approvedOrdersCount} órdenes aprobadas
                 </p>
               </div>
 
-              <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 space-y-2">
+              <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between text-zinc-400">
-                  <span className="text-xs font-semibold uppercase tracking-wider">Por Validar</span>
-                  <Clock className="w-4 h-4 text-amber-400" />
+                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">Por Validar</span>
+                  <Clock className="w-4 h-4 text-amber-400 shrink-0" />
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-amber-300">
+                <p className="text-xl sm:text-3xl font-black text-amber-300">
                   {stats.pendingApprovals}
                 </p>
-                <p className="text-[11px] text-zinc-400">Comprobantes en espera</p>
+                <p className="text-[10px] sm:text-[11px] text-zinc-400 truncate">Comprobantes en espera</p>
               </div>
 
-              <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 space-y-2">
+              <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between text-zinc-400">
-                  <span className="text-xs font-semibold uppercase tracking-wider">Boletos Emitidos</span>
-                  <Ticket className="w-4 h-4 text-ted-red" />
+                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">Boletos Emitidos</span>
+                  <Ticket className="w-4 h-4 text-ted-red shrink-0" />
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-white">
+                <p className="text-xl sm:text-3xl font-black text-white">
                   {stats.totalTickets}
                 </p>
-                <p className="text-[11px] text-zinc-400">Entradas aprobadas con QR</p>
+                <p className="text-[10px] sm:text-[11px] text-zinc-400 truncate">Aprobados con QR</p>
               </div>
 
-              <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 space-y-2">
+              <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between text-zinc-400">
-                  <span className="text-xs font-semibold uppercase tracking-wider">Asistencia Puerta</span>
-                  <Users className="w-4 h-4 text-blue-400" />
+                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">Asistencia Puerta</span>
+                  <Users className="w-4 h-4 text-blue-400 shrink-0" />
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-white">
+                <p className="text-xl sm:text-3xl font-black text-white">
                   {stats.checkedInTickets}{' '}
-                  <span className="text-sm font-normal text-zinc-400">
+                  <span className="text-xs sm:text-sm font-normal text-zinc-400">
                     ({stats.checkInPercentage}%)
                   </span>
                 </p>
-                <p className="text-[11px] text-zinc-400">Acreditados el día del evento</p>
+                <p className="text-[10px] sm:text-[11px] text-zinc-400 truncate">Acreditados en puerta</p>
               </div>
             </div>
           )}
 
-          {/* Filtros y Búsqueda */}
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+          {/* Filtros y Búsqueda (Mobile-First Swipeable) */}
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-3 sm:p-5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto pb-1 md:pb-0 -mx-1 px-1">
               {[
                 { id: 'PAYMENT_SUBMITTED', label: 'Por Revisar', count: stats?.pendingApprovals },
                 { id: 'APPROVED', label: 'Aprobadas' },
@@ -848,9 +850,9 @@ export const AdminDashboardPage: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setStatusFilter(tab.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                  className={`shrink-0 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl text-xs font-semibold tracking-wide whitespace-nowrap transition-colors flex items-center gap-1.5 ${
                     statusFilter === tab.id
-                      ? 'bg-ted-red text-white'
+                      ? 'bg-ted-red text-white shadow-md shadow-ted-red/20'
                       : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                   }`}
                 >
@@ -871,15 +873,107 @@ export const AdminDashboardPage: React.FC = () => {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar por orden, nombre, CI..."
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-9 pr-3 py-1.5 text-xs sm:text-sm text-white focus:outline-none focus:border-ted-red"
+                  placeholder="Buscar orden, nombre, CI..."
+                  className="w-full bg-zinc-800/90 border border-zinc-700 rounded-xl pl-9 pr-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-ted-red"
                 />
               </div>
             </form>
           </div>
 
-          {/* Tabla de Órdenes */}
-          <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+          {/* VISTA 1 (MÓVIL): Tarjetas de Órdenes Touch-Friendly */}
+          <div className="md:hidden space-y-3">
+            {orders.length === 0 ? (
+              <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-8 text-center text-zinc-400 text-xs">
+                No se encontraron órdenes con los filtros seleccionados.
+              </div>
+            ) : (
+              orders.map((o) => (
+                <div
+                  key={o.id}
+                  className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 space-y-3 shadow-lg"
+                >
+                  {/* Cabecera Tarjeta Móvil */}
+                  <div className="flex items-start justify-between gap-2 border-b border-zinc-800/80 pb-2.5">
+                    <div>
+                      <span className="font-mono font-bold text-white text-base block">{o.orderNumber}</span>
+                      <span className="text-[11px] text-zinc-400">
+                        {new Date(o.createdAt).toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <Badge status={o.status} />
+                  </div>
+
+                  {/* Datos del Comprador & Total */}
+                  <div className="grid grid-cols-2 gap-3 text-xs bg-zinc-950/70 p-3 rounded-xl border border-zinc-800/60">
+                    <div>
+                      <span className="text-zinc-500 block text-[10px] uppercase font-bold">Comprador</span>
+                      <p className="font-bold text-white text-sm truncate">{o.buyerName}</p>
+                      <p className="text-zinc-400 text-[11px] font-mono">CI: {o.buyerDocumentId}</p>
+                      <p className="text-zinc-400 text-[11px] font-mono">WA: {o.buyerPhone}</p>
+                    </div>
+
+                    <div className="text-right flex flex-col justify-between">
+                      <div>
+                        <span className="text-zinc-500 block text-[10px] uppercase font-bold">Monto Total</span>
+                        <span className="text-lg font-black text-emerald-400 font-mono">
+                          Bs {o.totalAmount.toFixed(2)}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-zinc-300 font-medium">
+                        {o.tickets?.length || 0} {o.tickets?.length === 1 ? 'boleto' : 'boletos'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Detalle de Comprobante / Referencia */}
+                  <div className="flex items-center justify-between text-xs px-1">
+                    {o.proofReceiptUrl ? (
+                      <a
+                        href={o.proofReceiptUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:underline font-semibold"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Ver Comprobante Adjunto</span>
+                        {o.proofReferenceNumber && (
+                          <span className="font-mono text-amber-300 text-[10px]">({o.proofReferenceNumber})</span>
+                        )}
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-zinc-500 italic">
+                        {o.paymentMethod === 'CASH' ? 'Efectivo presencial (Mesa)' : 'Sin comprobante adjunto'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Botón de Acción Móvil */}
+                  <Button
+                    size="sm"
+                    variant={o.status === 'PAYMENT_SUBMITTED' ? 'primary' : 'outline'}
+                    leftIcon={<Eye className="w-4 h-4" />}
+                    className="w-full justify-center py-2.5 font-bold text-xs"
+                    onClick={() => {
+                      setSelectedOrder(o);
+                      setAdminNotes('');
+                      setRejectReason('');
+                      setActionMessage(null);
+                    }}
+                  >
+                    {o.status === 'PAYMENT_SUBMITTED' ? 'Revisar y Validar Comprobante' : 'Ver Detalles de Orden'}
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* VISTA 2 (DESKTOP): Tabla Tradicional con Scroll Horizontal */}
+          <div className="hidden md:block bg-zinc-900/70 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-zinc-950/80 text-[11px] text-zinc-400 uppercase tracking-wider border-b border-zinc-800">
@@ -1885,17 +1979,17 @@ export const AdminDashboardPage: React.FC = () => {
               ) : (
                 /* Estado Pendiente / Métodos de Vinculación */
                 <div className="space-y-6">
-                  {/* Selector de Método de Emparejamiento */}
-                  <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                  {/* Selector de Método de Emparejamiento (Mobile-Friendly) */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
                     <div>
                       <h3 className="text-base font-bold text-white">Vincular Número de WhatsApp</h3>
                       <p className="text-xs text-zinc-400">Elige el método de emparejamiento que prefieras.</p>
                     </div>
 
-                    <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs">
+                    <div className="flex w-full sm:w-auto bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs">
                       <button
                         onClick={() => setWaPairingMode('qr')}
-                        className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+                        className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
                           waPairingMode === 'qr' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
                         }`}
                       >
@@ -1904,7 +1998,7 @@ export const AdminDashboardPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => setWaPairingMode('pairing-code')}
-                        className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+                        className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
                           waPairingMode === 'pairing-code' ? 'bg-ted-red text-white shadow' : 'text-zinc-400 hover:text-white'
                         }`}
                       >
@@ -2009,7 +2103,7 @@ export const AdminDashboardPage: React.FC = () => {
                           </p>
                         </div>
 
-                        <form onSubmit={handleGetPairingCode} className="flex gap-2">
+                        <form onSubmit={handleGetPairingCode} className="flex flex-col sm:flex-row gap-2">
                           <div className="relative flex-1">
                             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-mono font-bold text-xs">
                               +591
@@ -2030,6 +2124,7 @@ export const AdminDashboardPage: React.FC = () => {
                             variant="primary"
                             isLoading={waPairingLoading}
                             leftIcon={<KeyRound className="w-4 h-4" />}
+                            className="w-full sm:w-auto justify-center"
                           >
                             Generar Código
                           </Button>

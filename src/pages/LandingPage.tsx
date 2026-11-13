@@ -354,17 +354,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ event, onSelectTickets
         </div>
 
         {totalSelectedTickets > 0 && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
+          <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-3 sm:px-4">
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="bg-zinc-900/95 backdrop-blur-md border border-ted-red/50 p-4 rounded-2xl shadow-2xl flex items-center justify-between"
+              className="bg-zinc-900/95 backdrop-blur-md border border-ted-red/50 p-3.5 sm:p-4 rounded-2xl shadow-2xl flex items-center justify-between"
             >
               <div>
-                <p className="text-xs text-zinc-400 font-semibold">{totalSelectedTickets} pase(s) seleccionado(s)</p>
-                <p className="text-xl font-black text-white font-mono">Total: Bs {totalAmount.toFixed(2)}</p>
+                <p className="text-[11px] sm:text-xs text-zinc-400 font-semibold">{totalSelectedTickets} pase(s) seleccionado(s)</p>
+                <p className="text-lg sm:text-xl font-black text-white font-mono">Total: Bs {totalAmount.toFixed(2)}</p>
               </div>
-              <Button onClick={handleProceedToCheckout} className="bg-ted-red text-white font-bold">
+              <Button onClick={handleProceedToCheckout} className="bg-ted-red hover:bg-red-700 text-white font-bold text-xs sm:text-sm px-4 sm:px-5">
                 Continuar
               </Button>
             </motion.div>

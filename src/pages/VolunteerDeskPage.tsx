@@ -431,7 +431,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
                 </div>
 
                 {/* Datos del comprador */}
-                <div className="px-5 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs bg-zinc-950/40 p-3 mx-5 rounded-xl border border-zinc-800/60">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs bg-zinc-950/40 p-3.5 mx-3 sm:mx-5 rounded-xl border border-zinc-800/60">
                   <div>
                     <span className="text-zinc-500 block">Titular de la compra:</span>
                     <span className="font-bold text-white text-sm">{order.buyerName}</span>
@@ -454,7 +454,7 @@ export function VolunteerDeskPage({ event }: VolunteerDeskPageProps) {
 
                 {/* Mensaje de estado no aprobado */}
                 {!isApproved && (
-                  <div className="mx-5 p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-2 text-xs">
+                  <div className="mx-3 sm:mx-5 p-3.5 sm:p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-2 text-xs">
                     {isSubmitted && (
                       <p className="text-amber-300">
                         <strong>Aviso al comprador:</strong> El comprobante de transferencia bancaria fue recibido y está en la cola de revisión de los 5 validadores. En cuanto sea aprobado en el sistema, podrás presionar el botón de envío por WhatsApp.

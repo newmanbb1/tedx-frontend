@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { Ticket, Shield, Menu, X, QrCode, ShieldCheck, Users, Award } from 'lucide-react';
+import {
+  Ticket,
+  Shield,
+  Menu,
+  X,
+  QrCode,
+  ShieldCheck,
+  Users,
+  Award,
+  Home,
+  Search,
+  LogOut,
+} from 'lucide-react';
 import { Button } from './ui/Button.js';
 import { UserRole } from '../types/index.js';
 
@@ -161,94 +173,178 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex md:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-zinc-400 hover:text-white focus:outline-none"
-              aria-label="Abrir menú"
+              className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors focus:outline-none"
+              aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
       </div>
 
+      {/* Menú Drawer Móvil Full-Screen Moderno */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-zinc-800 bg-zinc-950 px-4 pt-2 pb-6 space-y-3">
-          <button
-            onClick={() => handleNav('landing')}
-            className="block w-full text-left py-2 text-base font-medium text-zinc-200"
-          >
-            Inicio & Evento
-          </button>
-          <button
-            onClick={() => handleNav('landing-tickets')}
-            className="block w-full text-left py-2 text-base font-medium text-zinc-200"
-          >
-            Comprar Entradas
-          </button>
-          <button
-            onClick={() => handleNav('order-lookup')}
-            className="block w-full text-left py-2 text-base font-medium text-zinc-200"
-          >
-            Consultar Mi Orden / Subir Comprobante
-          </button>
-          <button
-            onClick={() => handleNav('certificates')}
-            className="block w-full text-left py-2 text-base font-medium text-ted-red font-semibold"
-          >
-            Certificados Digitales (Asistencia)
-          </button>
-
-          {user ? (
-            <div className="pt-4 border-t border-zinc-800 space-y-2">
-              <p className="text-xs text-zinc-400">Sesión iniciada: {user.name} ({user.role})</p>
-              {isAdmin && (
-                <button
-                  onClick={() => handleNav('admin')}
-                  className="block w-full text-left py-2 text-base font-medium text-ted-red"
-                >
-                  Panel Administrativo
-                </button>
-              )}
-              {isValidator && (
-                <button
-                  onClick={() => handleNav('validator')}
-                  className="block w-full text-left py-2 text-base font-medium text-amber-400"
-                >
-                  Cola de Validadores (5 personas)
-                </button>
-              )}
-              {isVolunteer && (
-                <button
-                  onClick={() => handleNav('volunteer')}
-                  className="block w-full text-left py-2 text-base font-medium text-emerald-400"
-                >
-                  Mesa de Voluntarios (Carnet & WhatsApp)
-                </button>
-              )}
-              {isCheckin && (
-                <button
-                  onClick={() => handleNav('checkin')}
-                  className="block w-full text-left py-2 text-base font-medium text-blue-400"
-                >
-                  Escáner Puerta (Check-in)
-                </button>
-              )}
+        <div className="md:hidden fixed inset-x-0 top-20 bottom-0 bg-zinc-950/98 backdrop-blur-2xl z-50 overflow-y-auto px-5 py-6 flex flex-col justify-between border-t border-zinc-800 animate-in slide-in-from-top-2 duration-200">
+          <div className="space-y-6">
+            {/* Navegación Pública */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-3">
+                Navegación
+              </span>
               <button
-                onClick={onLogout}
-                className="block w-full text-left py-2 text-sm text-zinc-400 hover:text-red-400"
+                onClick={() => handleNav('landing')}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  currentView === 'landing'
+                    ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                    : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+                }`}
               >
-                Cerrar Sesión
+                <Home className="w-4 h-4 shrink-0" />
+                <span>Inicio & Evento TEDx</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('landing-tickets')}
+                className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  currentView === 'landing-tickets'
+                    ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                    : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Ticket className="w-4 h-4 shrink-0" />
+                  <span>Comprar Entradas</span>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+                  En Bs
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleNav('order-lookup')}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  currentView === 'order-lookup'
+                    ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                    : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+                }`}
+              >
+                <Search className="w-4 h-4 shrink-0" />
+                <span>Consultar Mi Orden / Comprobante</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('certificates')}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  currentView === 'certificates'
+                    ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                    : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+                }`}
+              >
+                <Award className="w-4 h-4 text-ted-red shrink-0" />
+                <span>Certificados Digitales Oficiales</span>
               </button>
             </div>
-          ) : (
-            <div className="pt-4 border-t border-zinc-800">
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
-                onClick={() => handleNav('login')}
+
+            {/* Zona de Equipo / Staff */}
+            {user ? (
+              <div className="space-y-3 pt-4 border-t border-zinc-800/80">
+                <div className="px-3 py-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase block">Sesión Activa</span>
+                    <span className="text-xs font-bold text-white">{user.name}</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-ted-red/20 text-ted-red border border-ted-red/30">
+                    {user.role}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-3">
+                    Herramientas de Equipo
+                  </span>
+
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleNav('admin')}
+                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
+                        currentView === 'admin'
+                          ? 'bg-ted-red text-white shadow-lg shadow-ted-red/20'
+                          : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+                      }`}
+                    >
+                      <Shield className="w-4 h-4 text-ted-red shrink-0" />
+                      <span>Panel Administrativo General</span>
+                    </button>
+                  )}
+
+                  {isValidator && (
+                    <button
+                      onClick={() => handleNav('validator')}
+                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
+                        currentView === 'validator'
+                          ? 'bg-amber-600 text-white'
+                          : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+                      }`}
+                    >
+                      <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Cola de Validadores (5 personas)</span>
+                    </button>
+                  )}
+
+                  {isVolunteer && (
+                    <button
+                      onClick={() => handleNav('volunteer')}
+                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
+                        currentView === 'volunteer'
+                          ? 'bg-emerald-600 text-white'
+                          : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+                      }`}
+                    >
+                      <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Mesa de Voluntarios (Carnet & WhatsApp)</span>
+                    </button>
+                  )}
+
+                  {isCheckin && (
+                    <button
+                      onClick={() => handleNav('checkin')}
+                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
+                        currentView === 'checkin'
+                          ? 'bg-blue-600 text-white'
+                          : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+                      }`}
+                    >
+                      <QrCode className="w-4 h-4 text-blue-400 shrink-0" />
+                      <span>Escáner Puerta (Check-in)</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="pt-4 border-t border-zinc-800/80">
+                <Button
+                  size="md"
+                  variant="outline"
+                  className="w-full justify-center text-sm py-3"
+                  leftIcon={<Shield className="w-4 h-4" />}
+                  onClick={() => handleNav('login')}
+                >
+                  Acceso Equipo TEDx
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Botón Cerrar Sesión fijo al fondo */}
+          {user && (
+            <div className="pt-6 border-t border-zinc-800">
+              <button
+                onClick={onLogout}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-rose-400 bg-rose-950/30 hover:bg-rose-950/60 border border-rose-900/50 transition-colors"
               >
-                Acceso Equipo TEDx
-              </Button>
+                <LogOut className="w-4 h-4" />
+                <span>Cerrar Sesión</span>
+              </button>
             </div>
           )}
         </div>
