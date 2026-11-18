@@ -69,9 +69,13 @@ export function ValidatorDashboardPage() {
       setSuccessMessage(res.message);
       await loadData(true);
       // Abrir modal con la orden recién tomada
-      const updated = orders.find((o) => o.id === orderId);
-      if (updated) {
-        setSelectedOrder({ ...updated, isLocked: true, isLockedByMe: true });
+      if (res.order) {
+        setSelectedOrder(res.order);
+      } else {
+        const updated = orders.find((o) => o.id === orderId);
+        if (updated) {
+          setSelectedOrder({ ...updated, isLocked: true, isLockedByMe: true });
+        }
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Error al tomar la orden');
