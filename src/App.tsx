@@ -39,7 +39,43 @@ function AppContent() {
     } else if (verifyCertParam) {
       setInitialCertCode(verifyCertParam);
       setCurrentView('certificates');
+    } else {
+      const path = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '');
+      if (path === 'checkin' || path === 'check-in' || path === 'puerta') {
+        setCurrentView('checkin');
+      } else if (path === 'voluntarios' || path === 'volunteer' || path === 'voluntario') {
+        setCurrentView('volunteer');
+      } else if (path === 'admin') {
+        setCurrentView('admin');
+      } else if (path === 'validador' || path === 'validator') {
+        setCurrentView('validator');
+      } else if (path === 'certificados' || path === 'certificates') {
+        setCurrentView('certificates');
+      } else if (path === 'login') {
+        setCurrentView('login');
+      }
     }
+
+    const onPopState = () => {
+      const path = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '');
+      if (path === 'checkin' || path === 'check-in' || path === 'puerta') {
+        setCurrentView('checkin');
+      } else if (path === 'voluntarios' || path === 'volunteer' || path === 'voluntario') {
+        setCurrentView('volunteer');
+      } else if (path === 'admin') {
+        setCurrentView('admin');
+      } else if (path === 'validador' || path === 'validator') {
+        setCurrentView('validator');
+      } else if (path === 'certificados' || path === 'certificates') {
+        setCurrentView('certificates');
+      } else if (path === 'login') {
+        setCurrentView('login');
+      } else if (!path) {
+        setCurrentView('landing');
+      }
+    };
+
+    window.addEventListener('popstate', onPopState);
 
     const initEvent = async () => {
       try {
@@ -54,11 +90,16 @@ function AppContent() {
     };
 
     initEvent();
+
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+    };
   }, []);
 
   const handleNavigate = useCallback((view: string) => {
     if (view === 'landing-tickets') {
       setCurrentView('landing');
+      window.history.pushState(null, '', '/');
       setTimeout(() => {
         const el = document.getElementById('tickets');
         if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -68,7 +109,25 @@ function AppContent() {
 
     if (view === 'order-lookup') {
       setCurrentView('order-success');
+      window.history.pushState(null, '', '/consulta');
       return;
+    }
+
+    const viewPathMap: Record<string, string> = {
+      landing: '/',
+      checkout: '/checkout',
+      'order-success': '/consulta',
+      'ticket-view': '/ticket',
+      certificates: '/certificados',
+      login: '/login',
+      admin: '/admin',
+      validator: '/validador',
+      volunteer: '/voluntarios',
+      checkin: '/checkin',
+    };
+
+    if (viewPathMap[view] && window.location.pathname !== viewPathMap[view]) {
+      window.history.pushState(null, '', viewPathMap[view]);
     }
 
     setCurrentView(view);
