@@ -184,6 +184,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [userActionLoading, setUserActionLoading] = useState(false);
   const [userActionError, setUserActionError] = useState<string | null>(null);
+  const [roleUpdatingUserId, setRoleUpdatingUserId] = useState<string | null>(null);
 
   // Modals de Confirmación y Alerta UI (Reemplazo total de confirm y alert del navegador)
   const [confirmModalConfig, setConfirmModalConfig] = useState<{
@@ -402,6 +403,21 @@ export const AdminDashboardPage: React.FC = () => {
     setShowPassword(false);
     setUserActionError(null);
     setUserModalOpen(true);
+  };
+
+  const handleQuickChangeRole = async (userId: string, newRole: UserRole) => {
+    setRoleUpdatingUserId(userId);
+    try {
+      await api.updateAdminUser(userId, { role: newRole });
+      setUsersList((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+      );
+      showAlert(`Rol actualizado a "${getUserRoleBadge(newRole).label}" correctamente.`, 'success', 'Rol Actualizado');
+    } catch (err: any) {
+      showAlert(err.message || 'Error al actualizar el rol del usuario', 'error', 'Error');
+    } finally {
+      setRoleUpdatingUserId(null);
+    }
   };
 
   const handleSaveUser = async (e: React.FormEvent) => {
@@ -3311,12 +3327,28 @@ export const AdminDashboardPage: React.FC = () => {
                               </div>
                             </td>
                             <td className="py-4 px-4">
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleConfig.badgeClass}`}
-                              >
-                                <Shield className="w-3 h-3" />
-                                {roleConfig.label}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleConfig.badgeClass} shrink-0`}
+                                >
+                                  <Shield className="w-3 h-3" />
+                                  {roleConfig.label}
+                                </span>
+
+                                <select
+                                  value={u.role}
+                                  disabled={roleUpdatingUserId === u.id}
+                                  onChange={(e) => handleQuickChangeRole(u.id, e.target.value as UserRole)}
+                                  className="bg-zinc-950 border border-zinc-700 hover:border-ted-red text-[11px] text-zinc-300 rounded-lg px-2 py-1 focus:outline-none focus:border-ted-red cursor-pointer transition-colors"
+                                  title="Cambiar rol en un solo clic"
+                                >
+                                  <option value="VOLUNTEER">Mesa / Voluntario</option>
+                                  <option value="CHECKIN">Check-in (Puerta)</option>
+                                  <option value="STAFF">Staff General</option>
+                                  <option value="VALIDATOR">Validador de Pagos</option>
+                                  <option value="ADMIN">Director / Admin</option>
+                                </select>
+                              </div>
                             </td>
                             <td className="py-4 px-4 text-center">
                               {totalActivity > 0 ? (
@@ -3386,11 +3418,26 @@ export const AdminDashboardPage: React.FC = () => {
                               <p className="text-zinc-400 text-xs font-mono">{u.email}</p>
                             </div>
                           </div>
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${roleConfig.badgeClass}`}
-                          >
-                            {roleConfig.label}
-                          </span>
+                          <div className="flex flex-col items-end gap-1.5 shrink-0">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${roleConfig.badgeClass}`}
+                            >
+                              {roleConfig.label}
+                            </span>
+                            <select
+                              value={u.role}
+                              disabled={roleUpdatingUserId === u.id}
+                              onChange={(e) => handleQuickChangeRole(u.id, e.target.value as UserRole)}
+                              className="bg-zinc-950 border border-zinc-700 text-[10px] text-zinc-300 rounded px-1.5 py-0.5 focus:outline-none focus:border-ted-red"
+                              title="Cambiar rol en un solo clic"
+                            >
+                              <option value="VOLUNTEER">Voluntario</option>
+                              <option value="CHECKIN">Check-in</option>
+                              <option value="STAFF">Staff</option>
+                              <option value="VALIDATOR">Validador</option>
+                              <option value="ADMIN">Admin</option>
+                            </select>
+                          </div>
                         </div>
 
                         <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1">
