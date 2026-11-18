@@ -50,7 +50,7 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
   const [referenceNumber, setReferenceNumber] = useState('');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [attendeesData, setAttendeesData] = useState<
-    Array<{ ticketTypeId: string; attendeeName: string; attendeeEmail: string; attendeeDocumentId: string }>
+    Array<{ ticketTypeId: string; attendeeName: string; attendeeEmail: string; attendeePhone: string; attendeeDocumentId: string }>
   >([]);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState('');
@@ -71,6 +71,7 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
           ticketTypeId: tt.id,
           attendeeName: '',
           attendeeEmail: '',
+          attendeePhone: '',
           attendeeDocumentId: '',
         });
       }
@@ -126,6 +127,31 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
       setLookupFeedback({
         type: 'error',
         message: err.message || 'Error al despachar por WhatsApp',
+      });
+    } finally {
+      setDispatchLoading(null);
+    }
+  };
+
+  const handleDispatchOrder = async (orderId: string) => {
+    setDispatchLoading(orderId);
+    setLookupFeedback(null);
+    try {
+      const res = await api.dispatchWhatsApp({
+        orderId,
+      });
+
+      setLookupFeedback({
+        type: res.success ? 'success' : 'error',
+        message: res.message,
+        waMeUrl: res.waMeUrl,
+      });
+
+      await handleLookup();
+    } catch (err: any) {
+      setLookupFeedback({
+        type: 'error',
+        message: err.message || 'Error al despachar la orden por WhatsApp',
       });
     } finally {
       setDispatchLoading(null);
@@ -478,17 +504,32 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
 
                 {/* Boletos de la orden */}
                 <div className="px-5 pb-5 space-y-3">
-                  <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center space-x-1">
-                    <QrCode className="w-4 h-4 text-ted-red" />
-                    <span>Boletos asociados a esta orden ({order.tickets.length})</span>
-                  </h4>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-2">
+                    <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center space-x-1">
+                      <QrCode className="w-4 h-4 text-ted-red" />
+                      <span>Boletos asociados a esta orden ({order.tickets.length})</span>
+                    </h4>
+
+                    {order.tickets.length > 1 && isApproved && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={dispatchLoading === order.id}
+                        onClick={() => handleDispatchOrder(order.id)}
+                        className="text-xs font-bold flex items-center gap-1.5 border border-zinc-700 hover:border-ted-red text-zinc-300 hover:text-white"
+                      >
+                        <Send className="w-3.5 h-3.5 text-ted-red" />
+                        <span>Despachar Todos los Boletos ({order.tickets.length})</span>
+                      </Button>
+                    )}
+                  </div>
 
                   <div className="grid grid-cols-1 gap-3">
                     {order.tickets.map((ticket) => {
                       const currentPhoneInput =
                         phoneOverrides[ticket.id] !== undefined
                           ? phoneOverrides[ticket.id]
-                          : order.buyerPhone;
+                          : ticket.attendeePhone || order.buyerPhone;
 
                       const isDispatching = dispatchLoading === ticket.id;
 
@@ -749,25 +790,26 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
                     return (
                       <div
                         key={idx}
-                        className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-3 text-xs"
+                        className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl grid grid-cols-1 md:grid-cols-12 gap-3 text-xs items-center"
                       >
-                        <div className="md:col-span-1 flex items-center space-x-2">
+                        <div className="md:col-span-3 flex items-center space-x-2">
                           <span className="w-6 h-6 rounded-full bg-ted-red text-white font-bold flex items-center justify-center text-xs shrink-0">
                             {idx + 1}
                           </span>
-                          <div>
-                            <span className="font-semibold text-white block">
+                          <div className="overflow-hidden">
+                            <span className="font-semibold text-white block truncate">
                               Asistente #{idx + 1}
                             </span>
-                            <span className="text-zinc-500">{tt?.name}</span>
+                            <span className="text-zinc-500 text-[11px] block truncate">{tt?.name}</span>
                           </div>
                         </div>
 
-                        <div>
+                        <div className="md:col-span-3">
+                          <label className="text-zinc-500 block text-[10px] uppercase font-bold mb-1">Nombre Completo *</label>
                           <input
                             type="text"
                             required
-                            placeholder="Nombre del Asistente *"
+                            placeholder="Nombre y Apellidos *"
                             value={att.attendeeName}
                             onChange={(e) => {
                               const updated = [...attendeesData];
@@ -778,15 +820,31 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
                           />
                         </div>
 
-                        <div>
+                        <div className="md:col-span-3">
+                          <label className="text-zinc-500 block text-[10px] uppercase font-bold mb-1">Carnet (CI) *</label>
                           <input
                             type="text"
                             required
-                            placeholder="Carnet (CI) del Asistente *"
+                            placeholder="Ej. 8492019"
                             value={att.attendeeDocumentId}
                             onChange={(e) => {
                               const updated = [...attendeesData];
                               updated[idx].attendeeDocumentId = e.target.value;
+                              setAttendeesData(updated);
+                            }}
+                            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white font-mono focus:outline-none focus:border-ted-red"
+                          />
+                        </div>
+
+                        <div className="md:col-span-3">
+                          <label className="text-zinc-500 block text-[10px] uppercase font-bold mb-1">WhatsApp Boleto (Opcional)</label>
+                          <input
+                            type="text"
+                            placeholder={buyerPhone ? `Titular (${buyerPhone})` : 'Ej. 71234567'}
+                            value={att.attendeePhone || ''}
+                            onChange={(e) => {
+                              const updated = [...attendeesData];
+                              updated[idx].attendeePhone = e.target.value;
                               setAttendeesData(updated);
                             }}
                             className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white font-mono focus:outline-none focus:border-ted-red"

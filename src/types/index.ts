@@ -154,6 +154,7 @@ export interface TicketData {
   ticketType: TicketTypeData;
   attendeeName: string;
   attendeeEmail: string;
+  attendeePhone?: string;
   attendeeDocumentId: string;
   qrCodeData?: string;
   qrDataUrl?: string;
@@ -203,6 +204,7 @@ export interface AttendeeInput {
   ticketTypeId: string;
   attendeeName?: string;
   attendeeEmail?: string;
+  attendeePhone?: string;
   attendeeDocumentId?: string;
 }
 
@@ -212,6 +214,7 @@ export interface UpdateAttendeeItem {
   attendeeName: string;
   attendeeDocumentId: string;
   attendeeEmail?: string;
+  attendeePhone?: string;
 }
 
 export interface CreateOrderPayload {
