@@ -83,7 +83,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [waPairingPhone, setWaPairingPhone] = useState('');
   const [waPairingResponse, setWaPairingResponse] = useState<WhatsAppPairingCodeResponse | null>(null);
   const [waPairingLoading, setWaPairingLoading] = useState(false);
-  const [qrCountdown, setQrCountdown] = useState<number>(25);
+  const [qrCountdown, setQrCountdown] = useState<number>(60);
   const [copiedCode, setCopiedCode] = useState(false);
 
   // Estados de la Cola Anti-Baneo
@@ -493,16 +493,16 @@ export const AdminDashboardPage: React.FC = () => {
     });
   };
 
-  const loadWhatsAppQR = async () => {
+  const loadWhatsAppQR = async (silent = false) => {
     try {
-      setWaQrLoading(true);
+      if (!silent) setWaQrLoading(true);
       const qr = await api.getWhatsAppQR();
       setWaQr(qr);
-      setQrCountdown(25); // Reiniciar temporizador de validez
+      setQrCountdown(60); // Reiniciar temporizador de validez a 60 segundos
     } catch (err: any) {
       console.warn('Error cargando QR de WhatsApp:', err);
     } finally {
-      setWaQrLoading(false);
+      if (!silent) setWaQrLoading(false);
     }
   };
 
@@ -669,7 +669,7 @@ export const AdminDashboardPage: React.FC = () => {
     }
   }, [activeAdminTab]);
 
-  // Temporizador anti-expiración de Código QR (cuenta regresiva de 25s que renueva el QR antes de que caduque)
+  // Temporizador anti-expiración de Código QR (cuenta regresiva de 60s que renueva el QR suavemente)
   useEffect(() => {
     if (activeAdminTab !== 'whatsapp' || waStatus?.state === 'open' || waPairingMode !== 'qr') {
       return;
@@ -678,8 +678,8 @@ export const AdminDashboardPage: React.FC = () => {
     const timer = setInterval(() => {
       setQrCountdown((prev) => {
         if (prev <= 1) {
-          loadWhatsAppQR();
-          return 25;
+          loadWhatsAppQR(true);
+          return 60;
         }
         return prev - 1;
       });
@@ -2906,14 +2906,14 @@ export const AdminDashboardPage: React.FC = () => {
                         <div className="flex items-center justify-between text-[11px] font-mono">
                           <span className="text-zinc-400 flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                            Validez del QR: <strong className="text-white">{qrCountdown}s</strong>
+                            Validez del QR: <strong className="text-white text-xs">{qrCountdown}s</strong>
                           </span>
-                          <span className="text-emerald-400">Auto-renovación automática activa</span>
+                          <span className="text-emerald-400">Auto-renovación suave (60s)</span>
                         </div>
                         <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
                           <div
                             className="bg-emerald-500 h-1.5 rounded-full transition-all duration-1000"
-                            style={{ width: `${(qrCountdown / 25) * 100}%` }}
+                            style={{ width: `${(qrCountdown / 60) * 100}%` }}
                           />
                         </div>
                       </div>
@@ -2921,22 +2921,31 @@ export const AdminDashboardPage: React.FC = () => {
                       <div className="flex flex-col sm:flex-row items-center gap-6 justify-center bg-zinc-950 p-6 rounded-2xl border border-zinc-800/80">
                         {/* Contenedor del Código QR */}
                         <div className="relative p-3 bg-white rounded-2xl shadow-2xl shrink-0 flex items-center justify-center min-w-[220px] min-h-[220px]">
-                          {waQrLoading ? (
+                          {waQrLoading && !waQr?.base64 ? (
                             <div className="flex flex-col items-center justify-center text-zinc-800 space-y-2">
                               <div className="w-8 h-8 border-3 border-ted-red border-t-transparent rounded-full animate-spin" />
                               <span className="text-[11px] font-mono font-bold">Generando QR fresco...</span>
                             </div>
                           ) : waQr?.base64 ? (
-                            <img
-                              src={waQr.base64}
-                              alt="Código QR de WhatsApp Evolution API"
-                              className="w-52 h-52 object-contain rounded-lg"
-                            />
+                            <div className="relative">
+                              <img
+                                src={waQr.base64}
+                                alt="Código QR de WhatsApp Evolution API"
+                                className={`w-52 h-52 object-contain rounded-lg transition-opacity ${
+                                  waQrLoading ? 'opacity-40' : 'opacity-100'
+                                }`}
+                              />
+                              {waQrLoading && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="w-6 h-6 border-2 border-ted-red border-t-transparent rounded-full animate-spin" />
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <div className="text-center p-4 text-zinc-700 space-y-2">
                               <AlertTriangle className="w-8 h-8 mx-auto text-amber-500" />
                               <p className="text-xs font-bold">QR no disponible aún</p>
-                              <Button size="sm" variant="primary" onClick={loadWhatsAppQR}>
+                              <Button size="sm" variant="primary" onClick={() => loadWhatsAppQR(false)}>
                                 Obtener QR
                               </Button>
                             </div>
@@ -2961,11 +2970,15 @@ export const AdminDashboardPage: React.FC = () => {
                             </li>
                           </ol>
 
+                          <div className="p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-amber-300/90 text-[11px]">
+                            ¿La cámara tarda en enfocar? Puedes tocar la pestaña <strong>"Código 8 Dígitos"</strong> arriba para vincular ingresando tu número de celular directamente sin usar cámara.
+                          </div>
+
                           <div className="pt-2 flex items-center justify-between">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={loadWhatsAppQR}
+                              onClick={() => loadWhatsAppQR(false)}
                               isLoading={waQrLoading}
                               leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
                               className="border-zinc-700 text-zinc-300 text-xs"
