@@ -46,7 +46,7 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
   const [buyerEmail, setBuyerEmail] = useState('');
   const [buyerPhone, setBuyerPhone] = useState('');
   const [buyerDocumentId, setBuyerDocumentId] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'TRANSFER'>('CASH');
+  const [paymentMethod] = useState<'TRANSFER'>('TRANSFER');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [attendeesData, setAttendeesData] = useState<
@@ -201,14 +201,11 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
 
       await api.volunteerRegister(formData);
 
-      // Lanzar confeti si fue en efectivo y aprobada
-      if (paymentMethod === 'CASH') {
-        confetti({
-          particleCount: 80,
-          spread: 60,
-          origin: { y: 0.6 },
-        });
-      }
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.6 },
+      });
 
       // Limpiar formulario
       setSelectedTicketCounts({});
@@ -644,7 +641,7 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
                 <span>Inscripción Presencial de Asistentes</span>
               </h2>
               <p className="text-xs text-zinc-400 mt-1">
-                Registra a uno o más asistentes en el stand. Puedes cobrar en efectivo (se aprueba de inmediato) o registrar pago por QR adjuntando el comprobante.
+                Registra a los asistentes en el stand adjuntando el comprobante de pago por código QR oficial del evento.
               </p>
             </div>
 
@@ -860,106 +857,83 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
             {/* 4. Método de Pago */}
             <div className="space-y-4 pt-4 border-t border-zinc-800">
               <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
-                4. Método de Cobro y Validación
+                4. Método de Cobro Oficial
               </label>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Opción Efectivo */}
-                <div
-                  onClick={() => setPaymentMethod('CASH')}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                    paymentMethod === 'CASH'
-                      ? 'bg-emerald-950/40 border-emerald-500 ring-1 ring-emerald-500'
-                      : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <Banknote className="w-5 h-5 text-emerald-400" />
-                    <span className="font-bold text-white text-sm">Pago en Efectivo (En Mano)</span>
-                  </div>
-                  <p className="text-xs text-zinc-400 mt-2">
-                    Cobras el dinero en el stand. La orden se <strong>aprueba de inmediato</strong> y queda registrada a tu nombre como recaudador. Los boletos quedan listos para enviar al instante.
-                  </p>
-                </div>
-
-                {/* Opción Pago con QR */}
-                <div
-                  onClick={() => setPaymentMethod('TRANSFER')}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                    paymentMethod === 'TRANSFER'
-                      ? 'bg-amber-950/40 border-amber-500 ring-1 ring-amber-500'
-                      : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'
-                  }`}
-                >
+              {/* Opción Única: Pago con QR Oficial */}
+              <div className="p-4 rounded-xl border bg-amber-950/20 border-amber-500/60 ring-1 ring-amber-500/40">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <QrCode className="w-5 h-5 text-amber-400" />
-                    <span className="font-bold text-white text-sm">Pago con QR</span>
+                    <span className="font-bold text-white text-sm">Pago Oficial con QR</span>
                   </div>
-                  <p className="text-xs text-zinc-400 mt-2">
-                    El comprador realizó el pago escaneando el código QR oficial. Subes la foto o captura del comprobante para su validación.
-                  </p>
+                  <span className="text-[11px] font-bold text-amber-400 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-800">
+                    Método Exclusivo
+                  </span>
                 </div>
+                <p className="text-xs text-zinc-300 mt-2">
+                  El comprador realiza el pago escaneando el código QR oficial del evento. Adjunta la foto o captura del comprobante bancario para su validación y despacho de boletos.
+                </p>
               </div>
 
-              {/* Si es QR: botón de ver QR, subida de comprobante y referencia */}
-              {paymentMethod === 'TRANSFER' && (
-                <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-4 text-xs">
-                  {paymentSettings && paymentSettings.length > 0 && paymentSettings[0]?.qrImageUrl && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-lg gap-2">
-                      <div className="flex items-center space-x-2 text-zinc-300">
-                        <QrCode className="w-4 h-4 text-ted-red shrink-0" />
-                        <span>¿El asistente necesita escanear el QR oficial en el stand?</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowQrModal(true)}
-                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium text-xs transition-colors self-start sm:self-auto cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Ver QR Oficial de Cobro</span>
-                      </button>
+              {/* Botón de ver QR, subida de comprobante y referencia */}
+              <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-4 text-xs">
+                {paymentSettings && paymentSettings.length > 0 && paymentSettings[0]?.qrImageUrl && (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-lg gap-2">
+                    <div className="flex items-center space-x-2 text-zinc-300">
+                      <QrCode className="w-4 h-4 text-ted-red shrink-0" />
+                      <span>¿El asistente necesita escanear el QR oficial en el stand?</span>
                     </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => setShowQrModal(true)}
+                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium text-xs transition-colors self-start sm:self-auto cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Ver QR Oficial de Cobro</span>
+                    </button>
+                  </div>
+                )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-zinc-300 font-medium block mb-1">
-                        Subir Comprobante de Pago QR (Foto o Captura) *
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
-                        className="w-full text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer"
-                      />
-                      {receiptFile && (
-                        <p className="text-emerald-400 text-[11px] mt-1 font-mono">
-                          Comprobante listo: {receiptFile.name}
-                        </p>
-                      )}
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-zinc-300 font-medium block mb-1">
+                      Subir Comprobante de Pago QR (Foto o Captura) *
+                    </label>
+                    <input
+                      type="file"
+                      required
+                      accept="image/*,application/pdf"
+                      onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                      className="w-full text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer"
+                    />
+                    {receiptFile && (
+                      <p className="text-emerald-400 text-[11px] mt-1 font-mono">
+                        Comprobante listo: {receiptFile.name}
+                      </p>
+                    )}
+                  </div>
 
-                    <div>
-                      <label className="text-zinc-300 font-medium block mb-1">
-                        Número de Referencia o Transacción QR (Opcional)
-                      </label>
-                      <input
-                        type="text"
-                        value={referenceNumber}
-                        onChange={(e) => setReferenceNumber(e.target.value)}
-                        placeholder="Ej. REF-984210"
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white font-mono focus:outline-none focus:border-ted-red"
-                      />
-                    </div>
+                  <div>
+                    <label className="text-zinc-300 font-medium block mb-1">
+                      Número de Referencia o Transacción QR (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={referenceNumber}
+                      onChange={(e) => setReferenceNumber(e.target.value)}
+                      placeholder="Ej. REF-984210"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white font-mono focus:outline-none focus:border-ted-red"
+                    />
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Total y Confirmación */}
             <div className="pt-6 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <span className="text-xs text-zinc-500 block">Total a recaudar:</span>
+                <span className="text-xs text-zinc-500 block">Total a pagar por QR:</span>
                 <span className="text-2xl font-black text-white font-mono">
                   Bs {totalRegisterAmount.toFixed(2)}
                 </span>
@@ -975,12 +949,8 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
                   <RefreshCw className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span>
-                      {paymentMethod === 'CASH'
-                        ? 'Confirmar Cobro en Efectivo y Aprobar'
-                        : 'Registrar Orden con Pago QR'}
-                    </span>
+                    <QrCode className="w-5 h-5" />
+                    <span>Registrar Orden con Pago QR</span>
                   </>
                 )}
               </Button>
