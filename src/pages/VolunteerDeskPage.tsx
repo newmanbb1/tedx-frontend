@@ -42,10 +42,6 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
 
   // Pestaña Inscripción
   const [selectedTicketCounts, setSelectedTicketCounts] = useState<Record<string, number>>({});
-  const [buyerName, setBuyerName] = useState('');
-  const [buyerEmail, setBuyerEmail] = useState('');
-  const [buyerPhone, setBuyerPhone] = useState('');
-  const [buyerDocumentId, setBuyerDocumentId] = useState('');
   const [paymentMethod] = useState<'TRANSFER'>('TRANSFER');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -176,6 +172,11 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
       }
     }
 
+    if (!attendeesData[0].attendeePhone?.trim()) {
+      setRegisterError('Ingresa el número de WhatsApp para el Asistente #1 para enviar las entradas');
+      return;
+    }
+
     if (paymentMethod === 'TRANSFER' && !receiptFile) {
       setRegisterError('Debes adjuntar la foto o captura del comprobante de pago por QR');
       return;
@@ -185,12 +186,15 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
     setRegisterError('');
 
     try {
+      const primaryAttendee = attendeesData[0];
+      const registeredCI = primaryAttendee.attendeeDocumentId.trim();
+
       const formData = new FormData();
       formData.append('eventId', event.id);
-      formData.append('buyerName', buyerName.trim());
-      formData.append('buyerEmail', buyerEmail.trim() || `${buyerDocumentId.trim()}@tedx.local`);
-      formData.append('buyerPhone', buyerPhone.trim());
-      formData.append('buyerDocumentId', buyerDocumentId.trim());
+      formData.append('buyerName', primaryAttendee.attendeeName.trim());
+      formData.append('buyerEmail', `${registeredCI}@tedx.local`);
+      formData.append('buyerPhone', primaryAttendee.attendeePhone.trim());
+      formData.append('buyerDocumentId', registeredCI);
       formData.append('paymentMethod', paymentMethod);
       formData.append('attendees', JSON.stringify(attendeesData));
 
@@ -209,11 +213,6 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
 
       // Limpiar formulario
       setSelectedTicketCounts({});
-      setBuyerName('');
-      setBuyerEmail('');
-      setBuyerPhone('');
-      const registeredCI = buyerDocumentId.trim();
-      setBuyerDocumentId('');
       setReceiptFile(null);
       setReferenceNumber('');
 
@@ -400,7 +399,21 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  setBuyerDocumentId(searchCarnet);
+                  if (event && event.ticketTypes.length > 0 && attendeesData.length === 0) {
+                    const firstType = event.ticketTypes[0];
+                    setSelectedTicketCounts({ [firstType.id]: 1 });
+                    setAttendeesData([{
+                      ticketTypeId: firstType.id,
+                      attendeeName: '',
+                      attendeeEmail: '',
+                      attendeePhone: '',
+                      attendeeDocumentId: searchCarnet,
+                    }]);
+                  } else if (attendeesData.length > 0) {
+                    const updated = [...attendeesData];
+                    updated[0].attendeeDocumentId = searchCarnet;
+                    setAttendeesData(updated);
+                  }
                   setActiveTab('register');
                 }}
                 className="border-ted-red text-ted-red hover:bg-ted-red hover:text-white text-xs"
@@ -718,72 +731,22 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
               </div>
             </div>
 
-            {/* 2. Datos del Comprador / Titular */}
-            <div className="space-y-3 pt-4 border-t border-zinc-800">
-              <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
-                2. Datos del Comprador (Titular de contacto)
-              </label>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                <div>
-                  <label className="text-zinc-400 block mb-1">Nombre Completo *</label>
-                  <input
-                    type="text"
-                    required
-                    value={buyerName}
-                    onChange={(e) => setBuyerName(e.target.value)}
-                    placeholder="Ej. Carlos Ramirez"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-ted-red"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-zinc-400 block mb-1">Carnet de Identidad (CI) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={buyerDocumentId}
-                    onChange={(e) => setBuyerDocumentId(e.target.value)}
-                    placeholder="Ej. 8492019"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-ted-red"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-zinc-400 block mb-1">WhatsApp (Celular Bolivia) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={buyerPhone}
-                    onChange={(e) => setBuyerPhone(e.target.value)}
-                    placeholder="Ej. 71234567"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-ted-red"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-zinc-400 block mb-1">Correo Electrónico (Opcional)</label>
-                  <input
-                    type="email"
-                    value={buyerEmail}
-                    onChange={(e) => setBuyerEmail(e.target.value)}
-                    placeholder="correo@ejemplo.com"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-ted-red"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Datos de cada Asistente */}
+            {/* 2. Datos de cada Asistente */}
             {attendeesData.length > 0 && (
               <div className="space-y-3 pt-4 border-t border-zinc-800">
-                <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
-                  3. Datos de cada Asistente ({attendeesData.length})
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
+                    2. Datos de cada Asistente ({attendeesData.length})
+                  </label>
+                  <span className="text-[11px] text-zinc-400">
+                    El Asistente #1 será el contacto titular para el envío de entradas
+                  </span>
+                </div>
 
                 <div className="space-y-3">
                   {attendeesData.map((att, idx) => {
                     const tt = event?.ticketTypes.find((t) => t.id === att.ticketTypeId);
+                    const isPrimary = idx === 0;
                     return (
                       <div
                         key={idx}
@@ -795,7 +758,7 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
                           </span>
                           <div className="overflow-hidden">
                             <span className="font-semibold text-white block truncate">
-                              Asistente #{idx + 1}
+                              Asistente #{idx + 1} {isPrimary && <span className="text-[10px] text-amber-400 font-normal">(Titular)</span>}
                             </span>
                             <span className="text-zinc-500 text-[11px] block truncate">{tt?.name}</span>
                           </div>
@@ -834,10 +797,19 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
                         </div>
 
                         <div className="md:col-span-3">
-                          <label className="text-zinc-500 block text-[10px] uppercase font-bold mb-1">WhatsApp Boleto (Opcional)</label>
+                          <label className="text-zinc-500 block text-[10px] uppercase font-bold mb-1">
+                            {isPrimary ? 'WhatsApp Titular *' : 'WhatsApp Boleto (Opcional)'}
+                          </label>
                           <input
                             type="text"
-                            placeholder={buyerPhone ? `Titular (${buyerPhone})` : 'Ej. 71234567'}
+                            required={isPrimary}
+                            placeholder={
+                              isPrimary
+                                ? 'Ej. 71234567'
+                                : attendeesData[0]?.attendeePhone
+                                ? `Usar Asistente 1 (${attendeesData[0].attendeePhone})`
+                                : 'Ej. 71234567'
+                            }
                             value={att.attendeePhone || ''}
                             onChange={(e) => {
                               const updated = [...attendeesData];
@@ -854,10 +826,10 @@ export function VolunteerDeskPage({ event, paymentSettings }: VolunteerDeskPageP
               </div>
             )}
 
-            {/* 4. Método de Pago */}
+            {/* 3. Método de Pago */}
             <div className="space-y-4 pt-4 border-t border-zinc-800">
               <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
-                4. Método de Cobro Oficial
+                3. Método de Cobro Oficial
               </label>
 
               {/* Opción Única: Pago con QR Oficial */}
