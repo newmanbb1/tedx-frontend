@@ -334,12 +334,34 @@ export const StaffCheckInPage: React.FC = () => {
             <div className="space-y-1 flex-1">
               <h2 className="text-xl sm:text-2xl font-black">
                 {lastResult.status === 'SUCCESS'
-                  ? '¡ACCESO AUTORIZADO!'
+                  ? `¡ACCESO AUTORIZADO! (CHECK ${lastResult.ticket?.checkInCount || 1}/4)`
                   : lastResult.status === 'ALREADY_USED'
-                  ? '¡ALERTA: BOLETO YA UTILIZADO!'
+                  ? '¡ALERTA: BOLETO YA COMPLETÓ SUS 4 CHECKS!'
                   : 'ACCESO DENEGADO'}
               </h2>
               <p className="text-sm opacity-90">{lastResult.message || lastResult.error}</p>
+
+              {/* Indicador visual de los 4 checks */}
+              {lastResult.ticket?.checkInCount !== undefined && (
+                <div className="flex flex-wrap items-center gap-2 pt-2">
+                  {[1, 2, 3, 4].map((step) => {
+                    const isDone = (lastResult.ticket?.checkInCount || 0) >= step;
+                    return (
+                      <div
+                        key={step}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border transition-colors ${
+                          isDone
+                            ? 'bg-emerald-500 text-black border-emerald-400'
+                            : 'bg-zinc-900/80 text-zinc-400 border-zinc-700'
+                        }`}
+                      >
+                        <span>Check {step}</span>
+                        {isDone && <CheckCircle2 className="w-3.5 h-3.5" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               {lastResult.ticket && (
                 <div className="pt-3 mt-3 border-t border-white/20 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
@@ -513,34 +535,44 @@ export const StaffCheckInPage: React.FC = () => {
 
             {searchResults.length > 0 && (
               <div className="space-y-2 max-h-56 overflow-y-auto pt-2">
-                {searchResults.map((t) => (
-                  <div
-                    key={t.id}
-                    className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between text-xs gap-2"
-                  >
-                    <div>
-                      <p className="font-bold text-white">{t.attendeeName}</p>
-                      <p className="text-zinc-400">
-                        CI: {t.attendeeDocumentId} &bull; {t.ticketType.name}
-                      </p>
-                    </div>
+                {searchResults.map((t) => {
+                  const checkCount = t.checkInCount || (t.isCheckedIn ? 1 : 0);
+                  const isComplete = checkCount >= 4;
 
-                    {t.isCheckedIn ? (
-                      <span className="text-[11px] text-amber-400 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-800">
-                        Ya acreditado
-                      </span>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        className="text-xs py-1 bg-ted-red hover:bg-red-700 text-white font-bold"
-                        onClick={() => handleValidate(t.ticketCode)}
-                      >
-                        Acreditar
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                  return (
+                    <div
+                      key={t.id}
+                      className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between text-xs gap-2"
+                    >
+                      <div>
+                        <p className="font-bold text-white">{t.attendeeName}</p>
+                        <p className="text-zinc-400">
+                          CI: {t.attendeeDocumentId} &bull; {t.ticketType.name}
+                        </p>
+                      </div>
+
+                      {isComplete ? (
+                        <span className="text-[11px] text-zinc-400 bg-zinc-900 px-2.5 py-0.5 rounded-full border border-zinc-700 font-semibold">
+                          4/4 Checks Usados
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-800">
+                            {checkCount}/4 checks
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            className="text-xs py-1 bg-ted-red hover:bg-red-700 text-white font-bold"
+                            onClick={() => handleValidate(t.ticketCode)}
+                          >
+                            Check {checkCount + 1}/4
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -573,7 +605,7 @@ export const StaffCheckInPage: React.FC = () => {
                           : 'bg-rose-950 text-rose-300'
                       }`}
                     >
-                      {item.status}
+                      {item.status === 'SUCCESS' ? `Check ${item.ticket?.checkInCount || 1}/4` : item.status}
                     </span>
                   </div>
                 ))}

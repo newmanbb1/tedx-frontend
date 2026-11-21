@@ -159,6 +159,7 @@ export interface TicketData {
   qrCodeData?: string;
   qrDataUrl?: string;
   isCheckedIn: boolean;
+  checkInCount?: number;
   checkedInAt?: string;
   checkedInBy?: { name: string };
   whatsappSentAt?: string;
@@ -272,6 +273,8 @@ export interface CheckInResult {
     checkedInAt?: string;
     checkedInBy?: string;
     orderNumber?: string;
+    checkInCount?: number;
+    maxChecks?: number;
   };
 }
 
