@@ -82,7 +82,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Ticket className="w-4 h-4" />
-              Consultar Mi Orden
+              Consultar Mi Orden (o CI)
             </button>
             <button
               onClick={() => handleNav('certificates')}
@@ -232,7 +232,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <Search className="w-4 h-4 shrink-0" />
-                <span>Consultar Mi Orden / Comprobante</span>
+                <span>Consultar Mi Orden (o Carnet CI)</span>
               </button>
 
               <button

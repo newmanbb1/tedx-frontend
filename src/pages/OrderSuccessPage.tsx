@@ -37,6 +37,7 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
 }) => {
   const [searchCode, setSearchCode] = useState(initialOrderNumber || '');
   const [order, setOrder] = useState<OrderData | null>(null);
+  const [allOrders, setAllOrders] = useState<OrderData[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -55,6 +56,7 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
     try {
       const data = await api.getOrderStatus(orderNum.trim());
       setOrder(data.order);
+      setAllOrders((data as any).orders || [data.order]);
       if (data.order.tickets) {
         setEditedAttendees(
           data.order.tickets.map((t: TicketData) => ({
@@ -76,6 +78,7 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
     } catch (err: any) {
       setErrorMsg(err.message || 'No se encontró la orden especificada.');
       setOrder(null);
+      setAllOrders([]);
     } finally {
       setLoading(false);
     }
@@ -197,7 +200,7 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Buscador de Orden */}
-      <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-5 shadow-lg">
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-5 sm:p-6 shadow-lg space-y-2.5">
         <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
@@ -205,7 +208,7 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
               type="text"
               value={searchCode}
               onChange={(e) => setSearchCode(e.target.value)}
-              placeholder="Ingresa tu Número de Orden (ej. TEDX-2026-...) para ver tus boletos..."
+              placeholder="Ingresa tu Carnet de Identidad (CI) o Número de Orden..."
               className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-ted-red transition-all"
             />
           </div>
@@ -213,7 +216,46 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
             Consultar Orden
           </Button>
         </form>
+        <p className="text-xs text-zinc-400 pl-1">
+          Busca tus boletos y credenciales ingresando tu <strong className="text-white">Carnet de Identidad (CI)</strong> o tu <strong className="text-white">Número de Orden</strong> (ej. TEDX-2026-...).
+        </p>
       </div>
+
+      {allOrders.length > 1 && (
+        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 space-y-2 animate-fade-in">
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block">
+            Se encontraron {allOrders.length} órdenes asociadas a esta búsqueda:
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {allOrders.map((ord) => (
+              <button
+                key={ord.id}
+                onClick={() => {
+                  setOrder(ord);
+                  if (ord.tickets) {
+                    setEditedAttendees(
+                      ord.tickets.map((t: TicketData) => ({
+                        id: t.id,
+                        ticketCode: t.ticketCode,
+                        attendeeName: t.attendeeName,
+                        attendeeDocumentId: t.attendeeDocumentId,
+                        attendeeEmail: t.attendeeEmail,
+                      }))
+                    );
+                  }
+                }}
+                className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold border transition-all ${
+                  order?.id === ord.id
+                    ? 'bg-ted-red text-white border-ted-red shadow-lg shadow-ted-red/20'
+                    : 'bg-zinc-950 text-zinc-300 border-zinc-800 hover:border-zinc-700'
+                }`}
+              >
+                Orden #{ord.orderNumber} ({ord.status === 'APPROVED' ? 'Aprobada' : ord.status})
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {attendeeSuccessMsg && (
         <div className="p-4 rounded-2xl bg-emerald-950/70 border border-emerald-700 text-emerald-200 text-sm flex items-center gap-2 animate-fade-in">
