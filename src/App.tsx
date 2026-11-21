@@ -41,7 +41,7 @@ function AppContent() {
       setCurrentView('certificates');
     } else {
       const path = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '');
-      if (path === 'checkin' || path === 'check-in' || path === 'puerta') {
+      if (path === 'checkin' || path === 'check-in' || path === 'puerta' || path === 'acreditacion' || path === 'control') {
         setCurrentView('checkin');
       } else if (path === 'voluntarios' || path === 'volunteer' || path === 'voluntario') {
         setCurrentView('volunteer');
@@ -58,7 +58,7 @@ function AppContent() {
 
     const onPopState = () => {
       const path = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '');
-      if (path === 'checkin' || path === 'check-in' || path === 'puerta') {
+      if (path === 'checkin' || path === 'check-in' || path === 'puerta' || path === 'acreditacion' || path === 'control') {
         setCurrentView('checkin');
       } else if (path === 'voluntarios' || path === 'volunteer' || path === 'voluntario') {
         setCurrentView('volunteer');
@@ -187,6 +187,8 @@ function AppContent() {
       setCurrentView('validator');
     } else if (loggedInUser.role === 'VOLUNTEER') {
       setCurrentView('volunteer');
+    } else if (loggedInUser.role === 'CHECKIN' || loggedInUser.role === 'STAFF') {
+      setCurrentView('checkin');
     } else {
       setCurrentView('checkin');
     }
